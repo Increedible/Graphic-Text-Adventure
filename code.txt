@@ -1,0 +1,9 @@
+left: 1b 5b 44
+right: 1b 5b 43
+up: 1b 5b 41
+down: 1b 5b 42
+shift+left: 1b 5b 31 3b 32 44
+shift+right: 1b 5b 31 3b 32 43
+shift+up: 1b 5b 31 3b 32 41
+shift+down: 1b 5b 31 3b 32 42
+
