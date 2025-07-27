@@ -1,6 +1,10 @@
 game_windows.exe
+game_linux.exe
 game_linux
-
+game_temp.cpp
 savefile1.txt
 savefile2.txt
 savefile3.txt
+.vscode
+Cursors
+Music
