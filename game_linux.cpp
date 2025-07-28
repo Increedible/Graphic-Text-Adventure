@@ -13,7 +13,6 @@
 #include "output.h"
 #include "assets.h"
 #include "utilities.h"
-#include <random>
 using namespace std;
 
 const double FPS = 17.0; // Default: 15.0
@@ -43,17 +42,6 @@ string currentFileIndex = "1";
 
 template<class T, size_t N>
 constexpr size_t lengthof(T(&)[N]) { return N; }
-
-mt19937 rng(time(0));
-// [l, r)
-int my_rand(int l, int r) {
-    uniform_int_distribution gen(l, r-1);
-    return gen(rng);
-}
-// [0,r)
-int my_rand(int r) {
-    return my_rand(0, r);
-}
 
 void getCin() {
     bool keys[KCOUNT];
@@ -544,7 +532,7 @@ void doMinigame() {
         specialOptions.insert(pair<string, string>("3", "Third Boulder"));
         string input = optionsNav(options, specialOptions, "Mine");
         int inputint = input[0] - '0';
-        if (my_rand(3) == 0) {
+        if (randomnum(3) == 0) {
             cout << minigameToString(inputint+3);
             coins += 20;
             if (inputint == 1)
@@ -1547,7 +1535,7 @@ bool battle(int opponentnmr) {
             typeOut("\nYou struck the enemy for " + colored(to_string(dmg), "text", "red") + " damage! It's now on " + colored(to_string(opponenthealth), "text", "red") + " health!");
             if (opponenthealth == 0) {
                 attack = false;
-                int coinreward = (my_rand(opponents[opponentnmr].coinrewardmax - opponents[opponentnmr].coinrewardmin + 1)) + opponents[opponentnmr].coinrewardmin;
+                int coinreward = (randomnum(opponents[opponentnmr].coinrewardmax - opponents[opponentnmr].coinrewardmin + 1)) + opponents[opponentnmr].coinrewardmin;
                 coins += coinreward;
                 typeOut("You defeated the enemy! You gained " + colored(to_string(coinreward), "text", "yellow") + " coins! [Press Enter]");
                 getCin();
@@ -1614,17 +1602,17 @@ bool battle(int opponentnmr) {
                     attackFrames -= 1;
                     // anti AFK for levels above 1 ; if the delay is 0
                     if (afkSpikeDelayX == 0) {
-                        afkSpikeDelayX = (my_rand(afkSpikeDelayMaxX));
+                        afkSpikeDelayX = (randomnum(afkSpikeDelayMaxX));
                         if (opponents[opponentnmr].difficulty > 1) {
                             int point1 = playerX;
                             if (spikesX[point1] == 0) // is this spike already claimed?
-                                spikesX[point1] = rows * spikeMove + (my_rand(afkSpikeDelayMaxX)) * spikeMove; // Fall ; with custom delay
+                                spikesX[point1] = rows * spikeMove + (randomnum(afkSpikeDelayMaxX)) * spikeMove; // Fall ; with custom delay
                         }
                     }
                     else
                         afkSpikeDelayX -= 1;
                     if (afkSpikeDelayY == 0) {
-                        afkSpikeDelayY = (my_rand(afkSpikeDelayMaxY));
+                        afkSpikeDelayY = (randomnum(afkSpikeDelayMaxY));
                         if (opponents[opponentnmr].difficulty > 1) {
                             int point2 = playerY;
                             if (spikesY[point2] == 0) // is this spike already claimed?
@@ -1634,31 +1622,31 @@ bool battle(int opponentnmr) {
                     else
                         afkSpikeDelayY -= 1;
                     // spikes X
-                    if (my_rand(chanceofspike) == 0) { // Is there going to be spike(s) summoned?
+                    if (randomnum(chanceofspike) == 0) { // Is there going to be spike(s) summoned?
                         for (int i = 0; i < ammountSpikesX; i++) {
-                            int point3 = my_rand(charPerRow); // Grab random spike pos
+                            int point3 = randomnum(charPerRow); // Grab random spike pos
                             if (spikesX[point3] == 0) // is this spike already claimed?
-                                spikesX[point3] = rows * spikeMove + (my_rand(maxSpikeCooldown)) * spikeMove;
+                                spikesX[point3] = rows * spikeMove + (randomnum(maxSpikeCooldown)) * spikeMove;
                         }
                     }
                     // spikes Y
                     if (opponents[opponentnmr].difficulty > 1) {
                         for (int i = 0; i < ammountSpikesY; i++) {
-                            int point4 = my_rand(rows); // Grab random spike pos
+                            int point4 = randomnum(rows); // Grab random spike pos
                             if (spikesY[point4] == 0) // is this spike already claimed?
                                 spikesY[point4] = charPerRow * spikeMove;
                         }
                     }
                     if (opponents[opponentnmr].difficulty > 2 && spikes2Countdown == 0) {
                         for (int i = 0; i < ammountSpikesY; i++) {
-                            int point5 = my_rand(rows); // Grab random spike pos
+                            int point5 = randomnum(rows); // Grab random spike pos
                             if (spikesY2[point5] == 0) // is this spike already claimed?
                                 spikesY2[point5] = charPerRow * spikeMove;
                         }
                     }
                     if (opponents[opponentnmr].difficulty > 3 && spikes3Countdown == 0) {
                         for (int i = 0; i < ammountSpikesY; i++) {
-                            int point6 = my_rand(rows); // Grab random spike pos
+                            int point6 = randomnum(rows); // Grab random spike pos
                             if (spikesY3[point6] == 0) // is this spike already claimed?
                                 spikesY3[point6] = charPerRow * spikeMove;
                         }
@@ -1723,7 +1711,7 @@ bool battle(int opponentnmr) {
                             invincibilityFrames = invincibilityFramesMax; // hit
                             int attackDamage = opponents[opponentnmr].attackdmg;
                             if (opponents[opponentnmr].dmgrange != 0) { // random damage range?
-                                attackDamage += (my_rand(opponents[opponentnmr].dmgrange + 1)) - opponents[opponentnmr].dmgrange / 2; // pick number between 1 - damage range, subtract by damage range / 2
+                                attackDamage += (randomnum(opponents[opponentnmr].dmgrange + 1)) - opponents[opponentnmr].dmgrange / 2; // pick number between 1 - damage range, subtract by damage range / 2
                             }
                             if (health - attackDamage < 0)
                                 health = 0;
@@ -1832,12 +1820,12 @@ bool battle(int opponentnmr) {
                         invincibilityFrames -= 1;
                     attackFrames -= 1;
                     // bombs
-                    if (my_rand(chanceofbomb) == 0) { // Is there going to be a bomb summoned?
+                    if (randomnum(chanceofbomb) == 0) { // Is there going to be a bomb summoned?
                         for (int i = 0; i < ammountbombs; i++) {
-                            int point = my_rand(charPerRow); // Grab random bomb pos
+                            int point = randomnum(charPerRow); // Grab random bomb pos
                             if (bombs[point][0] == 0) { // is this bomb already claimed?
-                                bombs[point][0] = rows * bombMove + (my_rand(maxBombCooldown)) * bombMove;
-                                bombs[point][1] = 0 - (rows - 1 - my_rand((int)(rows - rows / 3)));
+                                bombs[point][0] = rows * bombMove + (randomnum(maxBombCooldown)) * bombMove;
+                                bombs[point][1] = 0 - (rows - 1 - randomnum((int)(rows - rows / 3)));
                             }
                         }
                     }
@@ -2027,7 +2015,7 @@ bool battle(int opponentnmr) {
                             invincibilityFrames = invincibilityFramesMax; // hit
                             int attackDamage = opponents[opponentnmr].attackdmg;
                             if (opponents[opponentnmr].dmgrange != 0) { // random damage range?
-                                attackDamage += (my_rand(opponents[opponentnmr].dmgrange + 1)) - opponents[opponentnmr].dmgrange / 2; // pick number between 1 - damage range, subtract by damage range / 2
+                                attackDamage += (randomnum(opponents[opponentnmr].dmgrange + 1)) - opponents[opponentnmr].dmgrange / 2; // pick number between 1 - damage range, subtract by damage range / 2
                             }
                             if (health - attackDamage < 0)
                                 health = 0;
@@ -2097,20 +2085,20 @@ bool battle(int opponentnmr) {
                 int snakeMoveX[charPerRow]{};
                 int directionsX[charPerRow]{};
                 for (int i = 0; i < (int)lengthof(positionsX); i++) {
-                    positionsX[i] = 0 - (my_rand(randomSnakeCountdown));
-                    if (my_rand(randomSnakeIgnorance) == 0)
-                        snakeMoveX[i] = 1 + (my_rand(randomSnakeMoveMax * 5));
+                    positionsX[i] = 0 - (randomnum(randomSnakeCountdown));
+                    if (randomnum(randomSnakeIgnorance) == 0)
+                        snakeMoveX[i] = 1 + (randomnum(randomSnakeMoveMax * 5));
                     else
                         snakeMoveX[i] = 0;
-                    directionsX[i] = my_rand(2);
+                    directionsX[i] = randomnum(2);
                 }
                 int positionsY[rows]{};
                 int snakeMoveY[rows]{};
                 int directionsY[rows]{};
                 for (int i = 0; i < (int)lengthof(positionsY); i++) {
-                    positionsY[i] = 0 - (my_rand(randomSnakeCountdown));
-                    snakeMoveY[i] = 1 + (my_rand(randomSnakeMoveMax));
-                    directionsY[i] = my_rand(2);
+                    positionsY[i] = 0 - (randomnum(randomSnakeCountdown));
+                    snakeMoveY[i] = 1 + (randomnum(randomSnakeMoveMax));
+                    directionsY[i] = randomnum(2);
                 }
                 const int snakeduranceX = 1 * opponents[opponentnmr].difficulty;
                 const int snakeduranceY = 5 * opponents[opponentnmr].difficulty;
@@ -2176,7 +2164,7 @@ bool battle(int opponentnmr) {
                             invincibilityFrames = invincibilityFramesMax; // hit
                             int attackDamage = opponents[opponentnmr].attackdmg;
                             if (opponents[opponentnmr].dmgrange != 0) { // random damage range?
-                                attackDamage += (my_rand(opponents[opponentnmr].dmgrange + 1)) - opponents[opponentnmr].dmgrange / 2; // pick number between 1 - damage range, subtract by damage range / 2
+                                attackDamage += (randomnum(opponents[opponentnmr].dmgrange + 1)) - opponents[opponentnmr].dmgrange / 2; // pick number between 1 - damage range, subtract by damage range / 2
                             }
                             if (health - attackDamage < 0)
                                 health = 0;
@@ -2277,8 +2265,8 @@ int possibleEncounters[lengthof(stages)][4] = {
 
 void possibleEncounter() {
     if (possibleEncounters[stage][lengthof(possibleEncounters[stage]) - 1] != 0)
-        if (my_rand(possibleEncounters[stage][lengthof(possibleEncounters[stage]) - 1]) == 0 )
-            battle(possibleEncounters[stage][my_rand((lengthof(possibleEncounters[stage])-1))]);
+        if (randomnum(possibleEncounters[stage][lengthof(possibleEncounters[stage]) - 1]) == 0 )
+            battle(possibleEncounters[stage][randomnum((lengthof(possibleEncounters[stage])-1))]);
 }
 
 map<int, int> stageEncounters { // always add 1 to enemy number, tutorial = 0 but we type in 1.
