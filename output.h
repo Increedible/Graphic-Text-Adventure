@@ -7,7 +7,6 @@
 #include <cstdlib>
 #include <cmath>
 
-
 #define PIXEL_BLACK "\033[40m \033[0m"
 #define PIXEL_RED "\033[41m \033[0m"
 #define PIXEL_GREEN "\033[42m \033[0m"
