@@ -1,8 +1,8 @@
 game.exe
 game
-savefile1.txt
-savefile2.txt
-savefile3.txt
+saves/savefile1.txt
+saves/savefile2.txt
+saves/savefile3.txt
 .vscode
 Cursors
 Music
