@@ -145,14 +145,14 @@ string colored(string text, string type, string color, string color2 = "NULL") {
     return ("\033[" + output + 'm' + text + "\033[0m");
 }
 
-const string PIXEL_BLACK = "\033[40m \033[0m";
-const string PIXEL_RED = "\033[41m \033[0m";
-const string PIXEL_GREEN = "\033[42m \033[0m";
-const string PIXEL_YELLOW = "\033[43m \033[0m";
-const string PIXEL_BLUE = "\033[44m \033[0m";
-const string PIXEL_MAGENTA = "\033[45m \033[0m";
-const string PIXEL_CYAN = "\033[46m \033[0m";
-const string PIXEL_WHITE = "\033[47m \033[0m";
+#define PIXEL_BLACK "\033[40m \033[0m"
+#define PIXEL_RED "\033[41m \033[0m"
+#define PIXEL_GREEN "\033[42m \033[0m"
+#define PIXEL_YELLOW "\033[43m \033[0m"
+#define PIXEL_BLUE "\033[44m \033[0m"
+#define PIXEL_MAGENTA "\033[45m \033[0m"
+#define PIXEL_CYAN "\033[46m \033[0m"
+#define PIXEL_WHITE "\033[47m \033[0m"
 
 bool isAlphabet(char c) {
     string allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ12456789!@#$%^&*()<>,.''/\"";
@@ -939,21 +939,21 @@ string mapvis[lengthof(stages)][16] = {
 };
 
 string maplegend[lengthof(stages)][6] = {
-    {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou"},
-    {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou"},
-    {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou"},
-    {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou",PIXEL_BLUE + "\tWater"},
-    {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou"},
-    {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou","T\tTreasure"},
-    {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou"},
-    {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou","G\tGuard"},
-    {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou"},
-    {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou","S\tShopkeeper"},
-    {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou","C\tCrowd"},
-    {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou"},
-    {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou","P\tPerformer"},
-    {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou"},
-    {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou",PIXEL_RED+ "\tMineral Ore","W\tWorkers"},
+    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
+    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
+    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou",string(PIXEL_BLUE) + "\tWater"},
+    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
+    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
+    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou","T\tTreasure"},
+    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
+    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou","G\tGuard"},
+    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
+    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou","S\tShopkeeper"},
+    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou","C\tCrowd"},
+    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
+    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou","P\tPerformer"},
+    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
+    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou",string(PIXEL_RED)+ "\tMineral Ore","W\tWorkers"},
 };
 
 string mapconclusion[lengthof(stages)] = {
@@ -2654,6 +2654,8 @@ int main()
 {
     loadAssets();
     init();
+    cin.tie(0);
+    ios::sync_with_stdio(false);
     for (int i = 1; i < 4; i++) {
         fstream f("savefile" + to_string(i) + ".txt", ios::in);
         if (!f.is_open())
