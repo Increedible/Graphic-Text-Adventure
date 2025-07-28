@@ -322,23 +322,32 @@ int directions[lengthof(stages)][4] = {
             Items
     ========================= */
 
-string items[] = {
-    "NULL",
-    "Dusty Key",
-    "Premium Pass",
-    "Wooden Planks",
-    "Red Balloon",
-    "Oven Cookie",
+struct item {
+    int id;
+    string name;
+    string description;
+    bool isdroppable;
+    bool isusable;
+    int healthrestore=0; // If isedible, how much health does it restore?
+    vector<int> iterate;
+    item(int tid, const string& tname, const string& tdescription, bool tisdroppable, bool tisusable, int thealthrestore=0) {
+        id=tid;
+        name=tname;
+        description=tdescription;
+        isdroppable=tisdroppable;
+        tisusable=tisusable;
+        healthrestore=thealthrestore;
+        iterate = {isdroppable, isusable, healthrestore};
+    }
 };
 
-int itemInfo[lengthof(items)][3] = {
-//  {isdroppable,isusable(effect),iseadable(health)}
-    {0, 0, 0},
-    {1, 0, 0},
-    {1, 0, 0},
-    {1, 0, 0},
-    {1, 0, 0},
-    {1, 0, 25},
+item items[6] = {
+    {0, "NULL", "", false, false, false},
+    {1, "Dusty Key", "A key that looks like it hasn't been used in a long time.", true, false, false},
+    {2, "Premium Pass", "A pass that allows you to enter the club.", true, false, false},
+    {3, "Wooden Planks", "A few wooden planks that can be used for crafting.", true, true, false},
+    {4, "Red Balloon", "A red balloon that can be used to cheer up someone.", true, true, false},
+    {5, "Oven Cookie", "A delicious cookie that restores some health when eaten.", true, false, 25},
 };
 
 map<int, int> needItem {
@@ -380,7 +389,7 @@ void interactInventory() {
         else {
             typeOut("\nYour items:");
             for (int i = 0; i < (int)inventory.size(); i++)
-                options.insert(pair<string, string>(to_string(i + 1), to_string(i + 1) + ".\t" + items[inventory[i]]));
+                options.insert(pair<string, string>(to_string(i + 1), to_string(i + 1) + ".\t" + items[inventory[i]].name));
         }
         specialOptions.insert(pair<string, string>("1e", "Exit"));
         string input = optionsNav(options, specialOptions, "Inv");
@@ -391,47 +400,47 @@ void interactInventory() {
             int size = inventory.size();
             if (inputint <= size && inputint > 0) { // Buy succeeded, now buy item if money
                 inputint -= 1; // Correct iterator
-                typeOut("\n" + colored(items[inventory[inputint]], "text", "magenta"));
+                typeOut("\n" + colored(items[inventory[inputint]].name, "text", "magenta"));
                 map<string, string> options2;
                 map<string, string> specialOptions2;
                 options2.insert(pair<string, string>("1d", "Drop"));
                 options2.insert(pair<string, string>("2u", "Use"));
                 options2.insert(pair<string, string>("3e", "Eat"));
                 options2.insert(pair<string, string>("4x", "Exit"));
-                string input = optionsNav(options2, specialOptions2, "Item", [](int i) { return (itemInfo[inventory[inputint]][i] != 0); });
+                string input = optionsNav(options2, specialOptions2, "Item", [](int i) { return (items[inventory[inputint]].iterate[i] != 0); });
                 if (input == "d") {
-                    if (itemInfo[inventory[inputint]][0] > 0) {
+                    if (items[inventory[inputint]].isdroppable) {
                         int invInputInt = inventory[inputint];
                         inventory.erase(inventory.begin() + inputint);
-                        typeOut("Succesfully dropped " + colored(items[invInputInt],"text","magenta") + "! [Press Enter]");
+                        typeOut("Succesfully dropped " + colored(items[invInputInt].name,"text","magenta") + "! [Press Enter]");
                     }
                     else
                         typeOut("This item cannot be dropped! [Press Enter]");
                     getCin();
                 }
                 if (input == "u") {
-                    if (itemInfo[inventory[inputint]][1] > 0) {
+                    if (items[inventory[inputint]].isusable) {
                         // use the item, somehow
                         int invInputInt = inventory[inputint];
                         inventory.erase(inventory.begin() + inputint);
-                        typeOut("Succesfully used " + colored(items[invInputInt], "text", "magenta") + "! [Press Enter]");
+                        typeOut("Succesfully used " + colored(items[invInputInt].name, "text", "magenta") + "! [Press Enter]");
                     }
                     else
                         typeOut("This item cannot be used! [Press Enter]");
                     getCin();
                 }
                 if (input == "e") {
-                    if (itemInfo[inventory[inputint]][2] > 0) {
+                    if (items[inventory[inputint]].healthrestore>0) {
                         int invInputInt = inventory[inputint];
                         inventory.erase(inventory.begin() + inputint);
-                        if (health + itemInfo[invInputInt][2] > defHealth) {
+                        if (health + items[invInputInt].healthrestore > defHealth) {
                             health = 100;
-                            typeOut("You eat the " + colored(items[invInputInt], "text", "magenta") + ".");
+                            typeOut("You eat the " + colored(items[invInputInt].name, "text", "magenta") + ".");
                             typeOut("Your health was set back to " + colored(to_string(health), "text", "red") + ". [Press Enter]");
                         }
                         else {
-                            health += itemInfo[invInputInt][2];
-                            typeOut("You eat the " + colored(items[invInputInt], "text", "magenta") + ".");
+                            health += items[invInputInt].healthrestore;
+                            typeOut("You eat the " + colored(items[invInputInt].name, "text", "magenta") + ".");
                             typeOut("Your health was increased and now is " + colored(to_string(health), "text", "red") + ". [Press Enter]");
                         }
                     }
@@ -502,7 +511,7 @@ void shop() {
         map<string, string> specialOptions;
         cout << "\tItem\t\tPrice\tStock\n";
         for (int i = 1; i < shopbuyitems[shops[stage]][0]+1; i++)
-            options.insert(pair<string, string>(to_string(i+1), items[shopbuyitems[shops[stage]][i]] + "\t" + to_string(shopbuyprices[shops[stage]][i]) + "\t" + to_string(shopbuystock[shops[stage]][i])));
+            options.insert(pair<string, string>(to_string(i+1), items[shopbuyitems[shops[stage]][i]].name + "\t" + to_string(shopbuyprices[shops[stage]][i]) + "\t" + to_string(shopbuystock[shops[stage]][i])));
         specialOptions.insert(pair<string, string>("1s", "Sell item(s)"));
         specialOptions.insert(pair<string, string>("2i", "View inventory"));
         specialOptions.insert(pair<string, string>("3e", "Exit"));
@@ -519,7 +528,7 @@ void shop() {
                 else {
                     typeOut("\nYour items:");
                     for (int i = 0; i < (int)inventory.size(); i++)
-                        options.insert(pair<string, string>(to_string(i + 1), to_string(i + 1) + ".\t" + items[inventory[i]]));
+                        options.insert(pair<string, string>(to_string(i + 1), to_string(i + 1) + ".\t" + items[inventory[i]].name));
                 }
                 specialOptions.insert(pair<string, string>("1e", "Exit"));
                 string input = optionsNav(options, specialOptions, "Sell");
@@ -533,7 +542,7 @@ void shop() {
                         int invInputInt = inventory[inputint];
                         inventory.erase(inventory.begin() + inputint);
                         coins += shopsellprices[invInputInt-1];
-                        typeOut("You went ahead gained " + colored(to_string(shopsellprices[invInputInt-1]), "text", "yellow") + ((shopsellprices[invInputInt - 1] == 1) ? "coin" : "coin(s)") + "for selling your " + colored(items[invInputInt], "text", "magenta") + ".\n");
+                        typeOut("You went ahead gained " + colored(to_string(shopsellprices[invInputInt-1]), "text", "yellow") + ((shopsellprices[invInputInt - 1] == 1) ? "coin" : "coin(s)") + "for selling your " + colored(items[invInputInt].name, "text", "magenta") + ".\n");
                         
                     }
                     else
@@ -557,16 +566,16 @@ void shop() {
                             coins -= shopbuyprices[shops[stage]][inputint];
                             shopbuystock[shops[stage]][inputint] -= 1;
                             if (shopbuystock[shops[stage]][inputint] == 0) { giveOptions = true; }
-                            typeOut("\nYou went ahead and bought a " + colored(items[shopbuyitems[shops[stage]][inputint]], "text", "magenta") + ", and paid the shop owner " + colored(to_string(shopbuyprices[shops[stage]][inputint]), "text", "yellow") + " coins.\n");
+                            typeOut("\nYou went ahead and bought a " + colored(items[shopbuyitems[shops[stage]][inputint]].name, "text", "magenta") + ", and paid the shop owner " + colored(to_string(shopbuyprices[shops[stage]][inputint]), "text", "yellow") + " coins.\n");
                         }
                         else
-                            typeOut("You wanted to buy a " + colored(items[shopbuyitems[shops[stage]][inputint]], "text", "magenta") + ", but your inventory was full!\n");
+                            typeOut("You wanted to buy a " + colored(items[shopbuyitems[shops[stage]][inputint]].name, "text", "magenta") + ", but your inventory was full!\n");
                     }
                     else
-                        typeOut("You wanted to buy a " + colored(items[shopbuyitems[shops[stage]][inputint]], "text", "magenta") + ", but you didn't have enough coins!\n");
+                        typeOut("You wanted to buy a " + colored(items[shopbuyitems[shops[stage]][inputint]].name, "text", "magenta") + ", but you didn't have enough coins!\n");
                 }
                 else
-                    typeOut("You wanted to buy a " + colored(items[shopbuyitems[shops[stage]][inputint]], "text", "magenta") + ", but it was out of stock!\n");
+                    typeOut("You wanted to buy a " + colored(items[shopbuyitems[shops[stage]][inputint]].name, "text", "magenta") + ", but it was out of stock!\n");
             }
             else
                 typeOut("The item number " + to_string(inputint) + " is not available!\n");
@@ -786,6 +795,7 @@ string minigametext[] = {
     "NULL",             // minigame #0 doesn't exist
     "Mine some gold",   // minigame #1
 };
+
 void doMinigame() {
     if (minigames[stage] == 1) {
         typeOut("A local miner offers you to strike a boulder to maybe find gold!");
@@ -1102,6 +1112,7 @@ string mapvis[lengthof(stages)][16] = {
      "2121212121212121212121212121212121"
     },
 };
+
 string maplegend[lengthof(stages)][6] = {
     {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou"},
     {PIXEL_GREEN + "\tGrass",PIXEL_WHITE + "\tRock",PIXEL_YELLOW + "\tPath",PIXEL_CYAN + "\tYou"},
@@ -1215,7 +1226,19 @@ string battleVis[3] = {
     "666666666222222222000000000444444444544444444000000000222222222666666666"
 };
 
-const int opponents[][9] = {
+struct Enemy {
+    int hp;
+    int attackdmg;
+    int attackdurance;
+    int type; // 0 = Spikes, 1 = Melee, 2 = Ranged
+    int difficulty; // 1-10
+    int dmgrange; // 0 = no range, 10 = max range
+    int resistance; // 0-100%
+    int coinrewardmin;
+    int coinrewardmax;
+};
+
+Enemy opponents[] = {
 //  type 0 = Spikes
 //  hp, attackdurance, attackdmg, type, difficulty, dmgrange, resistance, coinrewardmin, coinrewardmax
     {50,  200/3, 1, 0, 1, 0, 0, 0, 0},         // enemy #0
@@ -1608,7 +1631,7 @@ bool battle(int opponentnmr) {
     cout << opponentToString(opponentnmr) << endl;
     typeOut("You encounter an enemy! [Press Enter]");
     getCin();
-    int opponenthealth = opponents[opponentnmr][0];
+    int opponenthealth = opponents[opponentnmr].hp;
     while (!retreat && opponenthealth > 0 && health > 0) {
         attack = true;
         if (giveOptions)
@@ -1780,7 +1803,7 @@ bool battle(int opponentnmr) {
                 MSDelay(10);       
             } while (!keys[K_UP]);
             int dmg = (int)((playerDmg - abs(50 - 100 * progress)) * dmgmul + 4);
-            dmg -= (int)(dmg * ((double)opponents[opponentnmr][6] / 100));
+            dmg -= (int)(dmg * ((double)opponents[opponentnmr].resistance / 100));
             if (dmg < 0) { dmg = 0; }
             if (opponenthealth - dmg < 0) { opponenthealth = 0; }
             else { opponenthealth -= dmg; }
@@ -1788,7 +1811,7 @@ bool battle(int opponentnmr) {
             typeOut("\nYou struck the enemy for " + colored(to_string(dmg), "text", "red") + " damage! It's now on " + colored(to_string(opponenthealth), "text", "red") + " health!");
             if (opponenthealth == 0) {
                 attack = false;
-                int coinreward = (my_rand(opponents[opponentnmr][8] - opponents[opponentnmr][7] + 1)) + opponents[opponentnmr][7];
+                int coinreward = (my_rand(opponents[opponentnmr].coinrewardmax - opponents[opponentnmr].coinrewardmin + 1)) + opponents[opponentnmr].coinrewardmin;
                 coins += coinreward;
                 typeOut("You defeated the enemy! You gained " + colored(to_string(coinreward), "text", "yellow") + " coins! [Press Enter]");
                 getCin();
@@ -1809,7 +1832,7 @@ bool battle(int opponentnmr) {
             MSDelay(1000);
             cout << "\r" << flush;
             set_cursor(false); // hide cursor
-            int attackFrames = opponents[opponentnmr][1];
+            int attackFrames = opponents[opponentnmr].attackdurance;
             bool exitAttack = false;
             const int rows = Y_SIZE;
             const int charPerRow = X_SIZE;
@@ -1821,21 +1844,21 @@ bool battle(int opponentnmr) {
             const int invincibilityFramesMax = 30;
             const int invincibilityFrameChange = 2;
             int invincibilityFrames = 0;
-            if (opponents[opponentnmr][3] == 0) { // is attack type spikes?
+            if (opponents[opponentnmr].type == 0) { // is attack type spikes?
                 // map<int, int> spikesX;
                 vector<int> spikesX(charPerRow); 
                 vector<int> spikesY(rows); 
                 vector<int> spikesY2(rows); 
                 vector<int> spikesY3(rows); 
                 int chanceofspike = 1;
-                if (opponents[opponentnmr][4] > 2) // add 50% chance if difficulty is under or equal to 2
+                if (opponents[opponentnmr].difficulty > 2) // add 50% chance if difficulty is under or equal to 2
                     int chanceofspikeX = 0;
                 const int spikeMove = 2;
-                const int maxSpikeCooldown = 10 * opponents[opponentnmr][4];
-                const int ammountSpikesX = 4 * opponents[opponentnmr][4];
-                const int ammountSpikesY = opponents[opponentnmr][4];
-                const int afkSpikeDelayMaxX = 80 / opponents[opponentnmr][4];
-                const int afkSpikeDelayMaxY = 400 / opponents[opponentnmr][4];
+                const int maxSpikeCooldown = 10 * opponents[opponentnmr].difficulty;
+                const int ammountSpikesX = 4 * opponents[opponentnmr].difficulty;
+                const int ammountSpikesY = opponents[opponentnmr].difficulty;
+                const int afkSpikeDelayMaxX = 80 / opponents[opponentnmr].difficulty;
+                const int afkSpikeDelayMaxY = 400 / opponents[opponentnmr].difficulty;
                 int spikes2Countdown = 100;
                 int spikes3Countdown = 200;
                 int afkSpikeDelayX = 0;
@@ -1856,7 +1879,7 @@ bool battle(int opponentnmr) {
                     // anti AFK for levels above 1 ; if the delay is 0
                     if (afkSpikeDelayX == 0) {
                         afkSpikeDelayX = (my_rand(afkSpikeDelayMaxX));
-                        if (opponents[opponentnmr][4] > 1) {
+                        if (opponents[opponentnmr].difficulty > 1) {
                             int point1 = playerX;
                             if (spikesX[point1] == 0) // is this spike already claimed?
                                 spikesX[point1] = rows * spikeMove + (my_rand(afkSpikeDelayMaxX)) * spikeMove; // Fall ; with custom delay
@@ -1866,7 +1889,7 @@ bool battle(int opponentnmr) {
                         afkSpikeDelayX -= 1;
                     if (afkSpikeDelayY == 0) {
                         afkSpikeDelayY = (my_rand(afkSpikeDelayMaxY));
-                        if (opponents[opponentnmr][4] > 1) {
+                        if (opponents[opponentnmr].difficulty > 1) {
                             int point2 = playerY;
                             if (spikesY[point2] == 0) // is this spike already claimed?
                                 spikesY[point2] = charPerRow * spikeMove; // no delay here, just immidiate fall
@@ -1883,21 +1906,21 @@ bool battle(int opponentnmr) {
                         }
                     }
                     // spikes Y
-                    if (opponents[opponentnmr][4] > 1) {
+                    if (opponents[opponentnmr].difficulty > 1) {
                         for (int i = 0; i < ammountSpikesY; i++) {
                             int point4 = my_rand(rows); // Grab random spike pos
                             if (spikesY[point4] == 0) // is this spike already claimed?
                                 spikesY[point4] = charPerRow * spikeMove;
                         }
                     }
-                    if (opponents[opponentnmr][4] > 2 && spikes2Countdown == 0) {
+                    if (opponents[opponentnmr].difficulty > 2 && spikes2Countdown == 0) {
                         for (int i = 0; i < ammountSpikesY; i++) {
                             int point5 = my_rand(rows); // Grab random spike pos
                             if (spikesY2[point5] == 0) // is this spike already claimed?
                                 spikesY2[point5] = charPerRow * spikeMove;
                         }
                     }
-                    if (opponents[opponentnmr][4] > 3 && spikes3Countdown == 0) {
+                    if (opponents[opponentnmr].difficulty > 3 && spikes3Countdown == 0) {
                         for (int i = 0; i < ammountSpikesY; i++) {
                             int point6 = my_rand(rows); // Grab random spike pos
                             if (spikesY3[point6] == 0) // is this spike already claimed?
@@ -1918,7 +1941,7 @@ bool battle(int opponentnmr) {
                         }
                     }
                     // Y 1
-                    if (opponents[opponentnmr][4] > 1) {
+                    if (opponents[opponentnmr].difficulty > 1) {
                         for (int x=0;x<rows;x++)
                         {
                             if (spikesY[x] > 0) {
@@ -1932,7 +1955,7 @@ bool battle(int opponentnmr) {
                         }
                     }
                     // Y 2
-                    if (opponents[opponentnmr][4] > 2) {
+                    if (opponents[opponentnmr].difficulty > 2) {
                         for (int x=0;x<rows;x++)
                         {
                             if (spikesY2[x] > 0) {
@@ -1946,7 +1969,7 @@ bool battle(int opponentnmr) {
                         }
                     }
                     // Y 3
-                    if (opponents[opponentnmr][4] > 3) {
+                    if (opponents[opponentnmr].difficulty > 3) {
                         for (int x=0;x<rows;x++)
                         {
                             if (spikesY3[x] > 0) {
@@ -1962,9 +1985,9 @@ bool battle(int opponentnmr) {
                     if (spikesVis[playerX][playerY] == 1 && attackFrames > 0) // hit?
                         if (invincibilityFrames == 0) { // player must not be invincible
                             invincibilityFrames = invincibilityFramesMax; // hit
-                            int attackDamage = opponents[opponentnmr][2];
-                            if (opponents[opponentnmr][5] != 0) { // random damage range?
-                                attackDamage += (my_rand(opponents[opponentnmr][5] + 1)) - opponents[opponentnmr][5] / 2; // pick number between 1 - damage range, subtract by damage range / 2
+                            int attackDamage = opponents[opponentnmr].attackdmg;
+                            if (opponents[opponentnmr].dmgrange != 0) { // random damage range?
+                                attackDamage += (my_rand(opponents[opponentnmr].dmgrange + 1)) - opponents[opponentnmr].dmgrange / 2; // pick number between 1 - damage range, subtract by damage range / 2
                             }
                             if (health - attackDamage < 0)
                                 health = 0;
@@ -2023,7 +2046,7 @@ bool battle(int opponentnmr) {
                 for (int i = 0; i < rows + 3; i++) // for every row + healthbar
                     cout << endl;
             }
-            if (opponents[opponentnmr][3] == 1) { // is attack type bombs?
+            if (opponents[opponentnmr].type == 1) { // is attack type bombs?
                 map<int, int[2]> bombs;
                 map<int, int> snake;
                 int snakepos = 0;
@@ -2031,39 +2054,39 @@ bool battle(int opponentnmr) {
                 int snake2pos = 0;
                 int snake2activate = 50;
                 int snakedurance = 40;
-                if (opponents[opponentnmr][4] < 2)
+                if (opponents[opponentnmr].difficulty < 2)
                     snakedurance = 20; // snake is less thicc
-                if (opponents[opponentnmr][4] > 4)
-                    snakedurance = 10 * opponents[opponentnmr][4]; // snake is more thicc
+                if (opponents[opponentnmr].difficulty > 4)
+                    snakedurance = 10 * opponents[opponentnmr].difficulty; // snake is more thicc
                 int snakemove = 2;
-                if (opponents[opponentnmr][4] > 2)
+                if (opponents[opponentnmr].difficulty > 2)
                     snakemove = 1; // snake moves faster
                 int chanceofbomb = 2;
-                if (opponents[opponentnmr][4] > 2)
-                    chanceofbomb = 5 - opponents[opponentnmr][4];
-                if (opponents[opponentnmr][4] > 5)
+                if (opponents[opponentnmr].difficulty > 2)
+                    chanceofbomb = 5 - opponents[opponentnmr].difficulty;
+                if (opponents[opponentnmr].difficulty > 5)
                     chanceofbomb = 1;
                 int bombMove = 4;
-                if (opponents[opponentnmr][4] > 2) // bombs move faster
+                if (opponents[opponentnmr].difficulty > 2) // bombs move faster
                     bombMove = 3;
-                if (opponents[opponentnmr][4] > 4) // bombs move faster
+                if (opponents[opponentnmr].difficulty > 4) // bombs move faster
                     bombMove = 2;
                 int explodeMove = 3;
-                if (opponents[opponentnmr][4] > 1) // explode move faster
+                if (opponents[opponentnmr].difficulty > 1) // explode move faster
                     explodeMove = 2;
-                if (opponents[opponentnmr][4] > 4) // explode move faster
+                if (opponents[opponentnmr].difficulty > 4) // explode move faster
                     explodeMove = 1;
-                int maxBombCooldown = 10 * opponents[opponentnmr][4];
-                if (opponents[opponentnmr][4] > 4) // bombs move faster
+                int maxBombCooldown = 10 * opponents[opponentnmr].difficulty;
+                if (opponents[opponentnmr].difficulty > 4) // bombs move faster
                     maxBombCooldown = 40;
                 bool upgradedBombs = false;
-                if (opponents[opponentnmr][4] > 2)
+                if (opponents[opponentnmr].difficulty > 2)
                     upgradedBombs = true;
                 int ammountbombs = 5;
-                if (opponents[opponentnmr][4] > 2)
+                if (opponents[opponentnmr].difficulty > 2)
                     ammountbombs = 6;
-                if (opponents[opponentnmr][4] > 4)
-                    ammountbombs = opponents[opponentnmr][4];
+                if (opponents[opponentnmr].difficulty > 4)
+                    ammountbombs = opponents[opponentnmr].difficulty;
                 int start = clock();
                 int dt = 1000 / FPS;
                 bool keys[KCOUNT];
@@ -2266,9 +2289,9 @@ bool battle(int opponentnmr) {
                     if (bombsVis[playerX][playerY] == 1 && attackFrames > 0) // hit?
                         if (invincibilityFrames == 0) { // player must not be invincible
                             invincibilityFrames = invincibilityFramesMax; // hit
-                            int attackDamage = opponents[opponentnmr][2];
-                            if (opponents[opponentnmr][5] != 0) { // random damage range?
-                                attackDamage += (my_rand(opponents[opponentnmr][5] + 1)) - opponents[opponentnmr][5] / 2; // pick number between 1 - damage range, subtract by damage range / 2
+                            int attackDamage = opponents[opponentnmr].attackdmg;
+                            if (opponents[opponentnmr].dmgrange != 0) { // random damage range?
+                                attackDamage += (my_rand(opponents[opponentnmr].dmgrange + 1)) - opponents[opponentnmr].dmgrange / 2; // pick number between 1 - damage range, subtract by damage range / 2
                             }
                             if (health - attackDamage < 0)
                                 health = 0;
@@ -2327,12 +2350,12 @@ bool battle(int opponentnmr) {
                 for (int i = 0; i < rows + 3; i++) // for every row + healthbar
                     cout << endl;
             }
-            if (opponents[opponentnmr][3] == 2) { // is attack type snakes? 
+            if (opponents[opponentnmr].type == 2) { // is attack type snakes? 
                 map<int, map<int, int>> snakes; // snakes[X][Y] -> duration
                 const int randomSnakeCountdown = 100;
                 const int randomSnakeMoveMax = 3;
                 int randomSnakeIgnorance = 3;
-                if (opponents[opponentnmr][4] > 0)
+                if (opponents[opponentnmr].difficulty > 0)
                     randomSnakeIgnorance = 2;
                 int positionsX[charPerRow]{};
                 int snakeMoveX[charPerRow]{};
@@ -2353,8 +2376,8 @@ bool battle(int opponentnmr) {
                     snakeMoveY[i] = 1 + (my_rand(randomSnakeMoveMax));
                     directionsY[i] = my_rand(2);
                 }
-                const int snakeduranceX = 1 * opponents[opponentnmr][4];
-                const int snakeduranceY = 5 * opponents[opponentnmr][4];
+                const int snakeduranceX = 1 * opponents[opponentnmr].difficulty;
+                const int snakeduranceY = 5 * opponents[opponentnmr].difficulty;
                 int start = clock();
                 int dt = 1000 / FPS;
                 bool keys[KCOUNT];
@@ -2415,9 +2438,9 @@ bool battle(int opponentnmr) {
                     if (snakes[playerX][playerY] > 0 && attackFrames > 0) // hit?
                         if (invincibilityFrames == 0) { // player must not be invincible
                             invincibilityFrames = invincibilityFramesMax; // hit
-                            int attackDamage = opponents[opponentnmr][2];
-                            if (opponents[opponentnmr][5] != 0) { // random damage range?
-                                attackDamage += (my_rand(opponents[opponentnmr][5] + 1)) - opponents[opponentnmr][5] / 2; // pick number between 1 - damage range, subtract by damage range / 2
+                            int attackDamage = opponents[opponentnmr].attackdmg;
+                            if (opponents[opponentnmr].dmgrange != 0) { // random damage range?
+                                attackDamage += (my_rand(opponents[opponentnmr].dmgrange + 1)) - opponents[opponentnmr].dmgrange / 2; // pick number between 1 - damage range, subtract by damage range / 2
                             }
                             if (health - attackDamage < 0)
                                 health = 0;
@@ -2522,7 +2545,7 @@ void possibleEncounter() {
             battle(possibleEncounters[stage][my_rand((lengthof(possibleEncounters[stage])-1))]);
 }
 
-map<int, int> stageEncounters { // alwys add 1 to enemy number, tutorial = 0 but we type in 1.
+map<int, int> stageEncounters { // always add 1 to enemy number, tutorial = 0 but we type in 1.
     {1, 1},             // In stage 1 ; Tutorial     
     {10, 5},            // In stage 10 ; duelist
     {15, 13},           // In stage 15 ; Angry man
@@ -2658,7 +2681,7 @@ string playStage(bool dodialogue = true) {
             if (addToInventory(getItem[stage]) == false)
                 typeOut("You wanted to pick up an item, but your inventory was full! \nCome back another time.");
             else {
-                typeOut("You aquired " + colored(items[getItem[stage]], "text", "magenta") + "!");
+                typeOut("You aquired " + colored(items[getItem[stage]].name, "text", "magenta") + "!");
                 getItem[stage] = 0;
             }
         }
@@ -2707,7 +2730,7 @@ void moveDirection(int direction, string name) {
             getCin();
         }
         else if (needItem[state] != 0 && !inventoryHas(needItem[state])) {
-            typeOut("You will need a " + colored(items[needItem[state]], "text", "magenta") + " to pass through here. [Press Enter]");
+            typeOut("You will need a " + colored(items[needItem[state]].name, "text", "magenta") + " to pass through here. [Press Enter]");
             getCin();
         }
         else if (coins < needcoins[state]) {
