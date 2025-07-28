@@ -10,7 +10,9 @@
 #include <assert.h>
 #include <climits>
 #include "linux_io.h"
+#include "output.h"
 #include "assets.h"
+#include "utilities.h"
 #include <random>
 using namespace std;
 
@@ -51,23 +53,6 @@ int my_rand(int l, int r) {
 // [0,r)
 int my_rand(int r) {
     return my_rand(0, r);
-}
-
-void goBack(int b) {
-    printf("\033[%dA", b);
-}
-
-void set_cursor(bool visible) {
-    if (visible) {
-        printf("\e[?25h");
-    } else {
-        printf("\e[?25l");
-    }
-}
-
-void clear() {
-    system("clear");
-    printf("\e[H");
 }
 
 void getCin() {
@@ -145,21 +130,19 @@ string colored(string text, string type, string color, string color2 = "NULL") {
     return ("\033[" + output + 'm' + text + "\033[0m");
 }
 
-const string PIXEL_BLACK = "\033[40m \033[0m";
-const string PIXEL_RED = "\033[41m \033[0m";
-const string PIXEL_GREEN = "\033[42m \033[0m";
-const string PIXEL_YELLOW = "\033[43m \033[0m";
-const string PIXEL_BLUE = "\033[44m \033[0m";
-const string PIXEL_MAGENTA = "\033[45m \033[0m";
-const string PIXEL_CYAN = "\033[46m \033[0m";
-const string PIXEL_WHITE = "\033[47m \033[0m";
+#define PIXEL_BLACK "\033[40m \033[0m"
+#define PIXEL_RED "\033[41m \033[0m"
+#define PIXEL_GREEN "\033[42m \033[0m"
+#define PIXEL_YELLOW "\033[43m \033[0m"
+#define PIXEL_BLUE "\033[44m \033[0m"
+#define PIXEL_MAGENTA "\033[45m \033[0m"
+#define PIXEL_CYAN "\033[46m \033[0m"
+#define PIXEL_WHITE "\033[47m \033[0m"
 
 bool isAlphabet(char c) {
     string allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ12456789!@#$%^&*()<>,.''/\"";
     return allowed.find(c) != std::string::npos;
 }
-
-void MSDelay(int d) { usleep(d*1000); }
 
 void typeOut(string text, int sleepms = 18, int aftersleep = 0) {
     bool keys[KCOUNT];
