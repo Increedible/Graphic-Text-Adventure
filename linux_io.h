@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <termios.h>
+//#include <termios.h>
 #include <cerrno>
 
 #define K_ENTER 0
@@ -13,15 +13,15 @@
 #define KCOUNT 5
 
 void init() {
-    // changing input mode
-    struct termios oldSettings, newSettings;
+    // // changing input mode
+    // struct termios oldSettings, newSettings;
 
-    tcgetattr( fileno( stdin ), &oldSettings );
-    newSettings = oldSettings;
-    newSettings.c_lflag &= (~ICANON & ~ECHO);
-    tcsetattr( fileno( stdin ), TCSANOW, &newSettings );
-    int flags = fcntl(fileno(stdin), F_GETFL, 0);
-    fcntl(fileno(stdin), F_SETFL, O_NONBLOCK | flags);
+    // tcgetattr( fileno( stdin ), &oldSettings );
+    // newSettings = oldSettings;
+    // newSettings.c_lflag &= (~ICANON & ~ECHO);
+    // tcsetattr( fileno( stdin ), TCSANOW, &newSettings );
+    // int flags = fcntl(fileno(stdin), F_GETFL, 0);
+    // fcntl(fileno(stdin), F_SETFL, O_NONBLOCK | flags);
 }
 
 int read_inp(char &c){
