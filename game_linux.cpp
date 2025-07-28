@@ -10,7 +10,9 @@
 #include <assert.h>
 #include <climits>
 #include "linux_io.h"
+#include "output.h"
 #include "assets.h"
+#include "utilities.h"
 #include <random>
 using namespace std;
 
@@ -53,23 +55,6 @@ int my_rand(int r) {
     return my_rand(0, r);
 }
 
-void goBack(int b) {
-    printf("\033[%dA", b);
-}
-
-void set_cursor(bool visible) {
-    if (visible) {
-        printf("\e[?25h");
-    } else {
-        printf("\e[?25l");
-    }
-}
-
-void clear() {
-    system("clear");
-    printf("\e[H");
-}
-
 void getCin() {
     bool keys[KCOUNT];
     do {
@@ -82,84 +67,10 @@ string toString(char c) {
     return s;
 }
 
-string colored(string text, string type, string color, string color2 = "NULL") {
-    vector<int> values;
-    bool istext = false;
-    bool isback = false;
-    stack<string> colors;
-    if (type == "text") {
-        istext = true;
-        colors.push(color);
-    }
-    else if (type == "back") {
-        isback = true;
-        colors.push(color);
-    }
-    else if (type == "backtext") {
-        istext = true;
-        isback = true;
-        colors.push(color);
-        if (color2 == "NULL") { istext = false; }
-        else { colors.push(color2); }
-    }
-    else if (type == "textback") {
-        istext, isback = true;
-        if (color2 == "NULL") { return "ERROR : Need second color"; }
-        colors.push(color2);
-        colors.push(color);
-    }
-    else
-        return "ERROR: Unvalid type";
-    if (istext) {
-        string pickedcolor = colors.top();
-        colors.pop();
-        if (pickedcolor == "black") { values.push_back(30); }
-        else if (pickedcolor == "red") { values.push_back(31); }
-        else if (pickedcolor == "green") { values.push_back(32); }
-        else if (pickedcolor == "yellow") { values.push_back(33); }
-        else if (pickedcolor == "blue") { values.push_back(34); }
-        else if (pickedcolor == "magenta") { values.push_back(35); }
-        else if (pickedcolor == "cyan") { values.push_back(36); }
-        else if (pickedcolor == "white") { values.push_back(37); }
-        else { values.push_back(30); }
-    }
-    if (isback) {
-        string pickedcolor = colors.top();
-        colors.pop();
-        if (pickedcolor == "black") { values.push_back(40); }
-        else if (pickedcolor == "red") { values.push_back(41); }
-        else if (pickedcolor == "green") { values.push_back(42); }
-        else if (pickedcolor == "yellow") { values.push_back(43); }
-        else if (pickedcolor == "blue") { values.push_back(44); }
-        else if (pickedcolor == "magenta") { values.push_back(45); }
-        else if (pickedcolor == "cyan") { values.push_back(46); }
-        else if (pickedcolor == "white") { values.push_back(47); }
-        else { values.push_back(30); }
-    }
-    values.push_back(1);
-    string output;
-    for (int i = 0; i < (int)values.size(); i++) {
-        output += to_string(values[i]);
-        if (i < (int)values.size() - 1) { output += ';'; }
-    }
-    return ("\033[" + output + 'm' + text + "\033[0m");
-}
-
-#define PIXEL_BLACK "\033[40m \033[0m"
-#define PIXEL_RED "\033[41m \033[0m"
-#define PIXEL_GREEN "\033[42m \033[0m"
-#define PIXEL_YELLOW "\033[43m \033[0m"
-#define PIXEL_BLUE "\033[44m \033[0m"
-#define PIXEL_MAGENTA "\033[45m \033[0m"
-#define PIXEL_CYAN "\033[46m \033[0m"
-#define PIXEL_WHITE "\033[47m \033[0m"
-
 bool isAlphabet(char c) {
     string allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ12456789!@#$%^&*()<>,.''/\"";
     return allowed.find(c) != std::string::npos;
 }
-
-void MSDelay(int d) { usleep(d*1000); }
 
 void typeOut(string text, int sleepms = 18, int aftersleep = 0) {
     bool keys[KCOUNT];
