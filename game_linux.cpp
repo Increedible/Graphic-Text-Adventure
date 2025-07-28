@@ -9,10 +9,17 @@
 #include <unistd.h>
 #include <assert.h>
 #include <climits>
-#include "linux_io.h"
 #include "assets.h"
 #include <random>
 using namespace std;
+
+#ifdef _WIN32
+    #include "input_windows.h"
+#elif __linux__
+    #include "input_linux.h"
+#endif
+
+my_io io;
 
 const double FPS = 17.0; // Default: 15.0
 const int X_SIZE = 101;
@@ -71,10 +78,9 @@ void clear() {
 }
 
 void getCin() {
-    bool keys[KCOUNT];
     do {
-        check(keys);
-    } while (!keys[K_ENTER]);
+        io.check_sync();
+    } while (!io.pressed[K_ENTER]);
 }
 
 string toString(char c) {
@@ -162,12 +168,11 @@ bool isAlphabet(char c) {
 void MSDelay(int d) { usleep(d*1000); }
 
 void typeOut(string text, int sleepms = 18, int aftersleep = 0) {
-    bool keys[KCOUNT];
     bool skip = 0;
     for (char c : text) {
         cout << c;
-        check(keys);
-        if (keys[K_LEFT])skip = 1;
+        io.check();;
+        if (io.pressed[K_LEFT])skip = 1;
         if (c == '\n')skip = 0;
         if (!skip && isAlphabet(c)) {
             MSDelay(sleepms);
@@ -182,9 +187,8 @@ string optionsNav(map<string, string> options, map<string, string> specialOption
     bool rerender = true;
     //cout << "Use up and down arrow keys to navigate, right arrow key to pick." << endl;
     set_cursor(false);
-    bool keys[KCOUNT];
     do {
-        check(keys);
+        io.check_sync();
         if (rerender) {
             rerender = false;
             int i = 0;
@@ -208,17 +212,17 @@ string optionsNav(map<string, string> options, map<string, string> specialOption
             }
             goBack((options.size() + specialOptions.size()));
         }
-        if (keys[K_UP])
+        if (io.pressed[K_UP])
             if (iteration > 0) {
                 iteration--;
                 rerender = true;
             }
-        if (keys[K_DOWN])
+        if (io.pressed[K_DOWN])
             if (iteration < (int)options.size() + (int)specialOptions.size() - 1) {
                 iteration++;
                 rerender = true;
             }
-    } while(!keys[K_RIGHT]);
+    } while(!io.pressed[K_RIGHT]);
     for (int i = 0; i < (int)options.size() + (int)specialOptions.size(); i++)
         cout << endl;
     set_cursor(true);
@@ -1500,9 +1504,8 @@ bool battle(int opponentnmr) {
                 specialOptions.insert(pair<string, string>("4e", "Exit"));
                 cout << "Use up and down arrow keys to navigate, right arrow key to pick." << endl;
                 set_cursor(false);
-                bool keys[KCOUNT];
                 do {
-                    check(keys);
+                    io.check_sync();
                     if (rerender) {
                         rerender = false;
                         int i = 0;
@@ -1521,17 +1524,17 @@ bool battle(int opponentnmr) {
                         }
                         goBack(specialOptions.size());
                     }
-                    if (keys[K_UP])
+                    if (io.pressed[K_UP])
                         if (iteration > 0) {
                             iteration--;
                             rerender = true;
                         }
-                    if (keys[K_DOWN])
+                    if (io.pressed[K_DOWN])
                         if (iteration < (int)specialOptions.size() - 1) {
                             iteration++;
                             rerender = true;
                         }
-                } while (!keys[K_RIGHT]);
+                } while (!io.pressed[K_RIGHT]);
                 for (int i = 0; i < (int)specialOptions.size(); i++)
                     cout << endl;
                 set_cursor(true);
@@ -1607,9 +1610,8 @@ bool battle(int opponentnmr) {
             cout << os.str() << endl;
             bool forward = true;
             double progress = 0.0;
-            bool keys[KCOUNT];
             do {
-                check(keys);
+                io.check();
                 double barWidth = 70;
                 std::cout << "[";
                 double pos = barWidth * progress;
@@ -1626,7 +1628,7 @@ bool battle(int opponentnmr) {
                 if (forward) { progress += 0.01; }
                 else { progress -= 0.01; }
                 MSDelay(10);       
-            } while (!keys[K_UP]);
+            } while (!io.pressed[K_UP]);
             int dmg = (int)((playerDmg - abs(50 - 100 * progress)) * dmgmul + 4);
             dmg -= (int)(dmg * ((double)opponents[opponentnmr].resistance / 100));
             if (dmg < 0) { dmg = 0; }
@@ -1690,7 +1692,6 @@ bool battle(int opponentnmr) {
                 int afkSpikeDelayY = 0;
                 int start = clock();
                 int dt = 3000 / FPS;
-                bool keys[KCOUNT];
                 vector<vector<int>> spikesVis(charPerRow+1, vector<int>(rows));
                 while (attackFrames != 0 && health > 0) {
                     for (auto&i:spikesVis)fill(i.begin(),i.end(),0);
@@ -1836,14 +1837,14 @@ bool battle(int opponentnmr) {
                         }
                         cout << endl;
                     }
-                    check(keys);
-                    if (keys[K_UP] && playerY != 0 && attackFrames > 0)
+                    io.check();
+                    if (io.pressed[K_UP] && playerY != 0 && attackFrames > 0)
                         playerY -= 1;
-                    if (keys[K_DOWN] && playerY != rows - 1 && attackFrames > 0)
+                    if (io.pressed[K_DOWN] && playerY != rows - 1 && attackFrames > 0)
                         playerY += 1;
-                    if (keys[K_LEFT] && playerX != 0 && attackFrames > 0)
+                    if (io.pressed[K_LEFT] && playerX != 0 && attackFrames > 0)
                         playerX -= 1 * speedmul;
-                    if (keys[K_RIGHT] && playerX != charPerRow - 1 && attackFrames > 0)
+                    if (io.pressed[K_RIGHT] && playerX != charPerRow - 1 && attackFrames > 0)
                         playerX += 1 * speedmul;
                     // render health bar
                     cout << endl;
@@ -1914,7 +1915,6 @@ bool battle(int opponentnmr) {
                     ammountbombs = opponents[opponentnmr].difficulty;
                 int start = clock();
                 int dt = 1000 / FPS;
-                bool keys[KCOUNT];
                 while (attackFrames > 0 && health > 0) {
                     map<int, map<int, int>> bombsVis;
                     if (invincibilityFrames > 0) // substract invincibility
@@ -2140,14 +2140,14 @@ bool battle(int opponentnmr) {
                         }
                         cout << "\n";
                     }
-                    check(keys);
-                    if (keys[K_UP] && playerY != 0 && attackFrames > 0)
+                    io.check();
+                    if (io.pressed[K_UP] && playerY != 0 && attackFrames > 0)
                         playerY -= 1;
-                    if (keys[K_DOWN] && playerY != rows - 1 && attackFrames > 0)
+                    if (io.pressed[K_DOWN] && playerY != rows - 1 && attackFrames > 0)
                         playerY += 1;
-                    if (keys[K_LEFT] && playerX != 0 && attackFrames > 0)
+                    if (io.pressed[K_LEFT] && playerX != 0 && attackFrames > 0)
                         playerX -= 1 * speedmul;
-                    if (keys[K_RIGHT] && playerX != charPerRow - 1 && attackFrames > 0)
+                    if (io.pressed[K_RIGHT] && playerX != charPerRow - 1 && attackFrames > 0)
                         playerX += 1 * speedmul; 
                     // render health bar
                     cout << endl;
@@ -2205,7 +2205,6 @@ bool battle(int opponentnmr) {
                 const int snakeduranceY = 5 * opponents[opponentnmr].difficulty;
                 int start = clock();
                 int dt = 1000 / FPS;
-                bool keys[KCOUNT];
                 while (attackFrames != 0 && health > 0) {
                     if (invincibilityFrames > 0) // substract invincibility
                         invincibilityFrames -= 1;
@@ -2291,14 +2290,14 @@ bool battle(int opponentnmr) {
                         }
                         cout << "\n";
                     }
-                    check(keys);
-                    if (keys[K_UP] && playerY != 0 && attackFrames > 0)
+                    io.check();
+                    if (io.pressed[K_UP] && playerY != 0 && attackFrames > 0)
                         playerY -= 1;
-                    if (keys[K_DOWN] && playerY != rows - 1 && attackFrames > 0)
+                    if (io.pressed[K_DOWN] && playerY != rows - 1 && attackFrames > 0)
                         playerY += 1;
-                    if (keys[K_LEFT] && playerX != 0 && attackFrames > 0)
+                    if (io.pressed[K_LEFT] && playerX != 0 && attackFrames > 0)
                         playerX -= 1 * speedmul;
-                    if (keys[K_RIGHT] && playerX != charPerRow - 1 && attackFrames > 0)
+                    if (io.pressed[K_RIGHT] && playerX != charPerRow - 1 && attackFrames > 0)
                         playerX += 1 * speedmul;
                     // render health bar
                     cout << endl;
@@ -2653,7 +2652,7 @@ void music() {
 int main()
 {
     loadAssets();
-    init();
+    io.init();
     cin.tie(0);
     ios::sync_with_stdio(false);
     for (int i = 1; i < 4; i++) {
@@ -2679,4 +2678,5 @@ int main()
         input = playStage(dodialogue);
         dodialogue = processInput(input);
     }
+    io.uninit();
 }
