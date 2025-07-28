@@ -23,7 +23,7 @@ struct my_io : base_io{
         }
     }
 
-    void ErrorExit (char* lpszMessage){
+    void ErrorExit (const char* lpszMessage){
         fprintf(stderr, "%s\n", lpszMessage);
         // Restore input mode on exit.
         SetConsoleMode(hStdin, fdwSaveOldMode);
