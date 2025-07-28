@@ -7,14 +7,6 @@
 #include "input_base.h"
 #include <stdlib.h>
 
-// #define K_ENTER 0
-// #define K_UP 1
-// #define K_DOWN 2
-// #define K_RIGHT 3
-// #define K_LEFT 4
-
-// #define KCOUNT 5
-
 struct my_io : base_io{
     termios oldSettings;
 

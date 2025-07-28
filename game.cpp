@@ -89,30 +89,31 @@ string optionsNav(map<string, string> options, map<string, string> specialOption
     //cout << "Use up and down arrow keys to navigate, right arrow key to pick." << endl;
     set_cursor(false);
     do {
-        io.check_sync();
         if (rerender) {
             rerender = false;
             int i = 0;
             for (auto const& p : options) {
                 if (iteration == i)
-                    cout << colored(option + " >\t" + p.second, "text", "yellow") << endl;
+                    printf("%s\n",colored(option + " >\t" + p.second, "text", "yellow").c_str());
                 else if (func1 == nullptr || ((func2 != nullptr) && !func2(i)))
-                    cout << colored("      \t" + p.second, "text", "white") << endl;
+                    printf("%s\n",colored("      \t" + p.second, "text", "white").c_str());
                 else if (func1(i))
-                    cout << colored("      \t" + p.second, "text", "green") << endl;
+                    printf("%s\n",colored("      \t" + p.second, "text", "green").c_str());
                 else
-                    cout << colored("      \t" + p.second, "text", "red") << endl;
+                    printf("%s\n",colored("      \t" + p.second, "text", "red").c_str());
                 i++;
             }
             for (auto const& p : specialOptions) {
                 if (iteration == i)
-                    cout << colored(option + " >\t" + p.second, "text", "yellow") << endl;
+                    printf("%s\n",colored(option + " >\t" + p.second, "text", "yellow").c_str());
                 else
-                    cout << colored("       \t" + p.second, "text", "blue") << endl;
+                    printf("%s\n",colored("       \t" + p.second, "text", "blue").c_str());
                 i++;
             }
             goBack((options.size() + specialOptions.size()));
+            fflush(stdout);
         }
+        io.check_sync();
         if (io.pressed[K_UP])
             if (iteration > 0) {
                 iteration--;
@@ -1037,7 +1038,6 @@ bool battle(int opponentnmr) {
                 cout << "Use up and down arrow keys to navigate, right arrow key to pick." << endl;
                 set_cursor(false);
                 do {
-                    io.check_sync();
                     if (rerender) {
                         rerender = false;
                         int i = 0;
@@ -1056,6 +1056,7 @@ bool battle(int opponentnmr) {
                         }
                         goBack(specialOptions.size());
                     }
+                    io.check_sync();
                     if (io.pressed[K_UP])
                         if (iteration > 0) {
                             iteration--;
@@ -2099,8 +2100,6 @@ int main()
 {
     loadAssets();
     io.init();
-    cin.tie(0);
-    ios::sync_with_stdio(false);
     // File saving
     for (int i = 1; i < 4; i++) {
         fstream f("savefile" + to_string(i) + ".txt", ios::in);
