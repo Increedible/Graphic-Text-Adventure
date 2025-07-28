@@ -476,34 +476,33 @@ map<int,int> needcoins {
             Shop
     ========================= */
 
-int shopsellprices[lengthof(items)] = { // for every item put sell price in
-    1,
-    20,
-    5,
-    5,
-    2,
+struct shop {
+    vector<int> shopshellprices; // for every item put sell price in
+    vector<int> shopbuyitemoptions;  // {length, rest...}
+    vector<int> shopitemprices; // prices for items if you buy them
+    vector<int> shopitemstock; // stock of those items
 };
 
-map<int,int> shops {
+shop shops[2] = {
+    {
+        {0, 0, 0, 0, 0}, // sell prices for items
+        {0}, // buy items options
+        {0}, // buy prices for items
+        {0} // stock of items in shop
+    },
+    {
+        {1, 20, 5, 5, 2},
+        {4, 2, 3, 4, 5},
+        {0, 20, 5, 5, 2},
+        {0, 1, 5, 2, 5}
+    }
+};
+
+map<int,int> shopList {
     {9, 1} // on stage 9 shop #1
 };
 
-int shopbuyitems[][lengthof(items)] = { // {length, rest...}
-    {4,0,0,0,0},
-    {4,2,3,4,5}
-};
-
-int shopbuyprices[lengthof(shopbuyitems)][lengthof(items)] = {
-    {0,0,0,0,0},
-    {0,20,5,5,2}
-};
-
-int shopbuystock[lengthof(shopbuyitems)][lengthof(items)] = {
-    {0,0,0,0,0},
-    {0,1,5,2,5}
-};
-
-void shop() {
+void openShop() {
     bool giveOptions = false;
     bool exit = false;
     while (!exit) {
@@ -511,12 +510,12 @@ void shop() {
         map<string, string> options;
         map<string, string> specialOptions;
         cout << "\tItem\t\tPrice\tStock\n";
-        for (int i = 1; i < shopbuyitems[shops[stage]][0]+1; i++)
-            options.insert(pair<string, string>(to_string(i+1), items[shopbuyitems[shops[stage]][i]].name + "\t" + to_string(shopbuyprices[shops[stage]][i]) + "\t" + to_string(shopbuystock[shops[stage]][i])));
+        for (int i = 1; i < shops[shopList[stage]].shopbuyitemoptions[0]+1; i++)
+            options.insert(pair<string, string>(to_string(i+1), items[shops[shopList[stage]].shopbuyitemoptions[i]].name + "\t" + to_string(shops[shopList[stage]].shopitemprices[i]) + "\t" + to_string(shops[shopList[stage]].shopitemstock[i])));
         specialOptions.insert(pair<string, string>("1s", "Sell item(s)"));
         specialOptions.insert(pair<string, string>("2i", "View inventory"));
         specialOptions.insert(pair<string, string>("3e", "Exit"));
-        string input = optionsNav(options, specialOptions, "Shop", [](int i) { return (inventory.size() < inventorymax && shopbuyprices[shops[stage]][i + 1] <= coins && shopbuystock[shops[stage]][i + 1] > 0); });
+        string input = optionsNav(options, specialOptions, "Shop", [](int i) { return (inventory.size() < inventorymax && shops[shopList[stage]].shopitemprices[i + 1] <= coins && shops[shopList[stage]].shopitemstock[i + 1] > 0); });
         if (input == "e")
             exit = true;
         else if (input == "s") {
@@ -542,8 +541,8 @@ void shop() {
                         inputint -= 1; // Correct iterator
                         int invInputInt = inventory[inputint];
                         inventory.erase(inventory.begin() + inputint);
-                        coins += shopsellprices[invInputInt-1];
-                        typeOut("You went ahead gained " + colored(to_string(shopsellprices[invInputInt-1]), "text", "yellow") + ((shopsellprices[invInputInt - 1] == 1) ? "coin" : "coin(s)") + "for selling your " + colored(items[invInputInt].name, "text", "magenta") + ".\n");
+                        coins += shops[shopList[stage]].shopshellprices[invInputInt-1];
+                        typeOut("You went ahead gained " + colored(to_string(shops[shopList[stage]].shopitemprices[invInputInt-1]), "text", "yellow") + ((shops[shopList[stage]].shopitemprices[invInputInt-1] == 1) ? "coin" : "coin(s)") + "for selling your " + colored(items[invInputInt].name, "text", "magenta") + ".\n");
                         
                     }
                     else
@@ -558,25 +557,25 @@ void shop() {
         }
         else if (isdigit(input[0])) { 
             int inputint = input[0] - '0';
-            int size = lengthof(shopbuyitems[shops[stage]]);
+            int size = shops[shopList[stage]].shopbuyitemoptions.size();
             if (inputint <= size && inputint > 0) { // Buy succeeded, now buy item if money
                 inputint -= 1; // Correct iterator
-                if (shopbuystock[shops[stage]][inputint] > 0) {
-                    if (shopbuyprices[shops[stage]][inputint] <= coins) {
-                        if (addToInventory(shopbuyitems[shops[stage]][inputint]) == true) {
-                            coins -= shopbuyprices[shops[stage]][inputint];
-                            shopbuystock[shops[stage]][inputint] -= 1;
-                            if (shopbuystock[shops[stage]][inputint] == 0) { giveOptions = true; }
-                            typeOut("\nYou went ahead and bought a " + colored(items[shopbuyitems[shops[stage]][inputint]].name, "text", "magenta") + ", and paid the shop owner " + colored(to_string(shopbuyprices[shops[stage]][inputint]), "text", "yellow") + " coins.\n");
+                if (shops[shopList[stage]].shopitemstock[inputint] > 0) {
+                    if (shops[shopList[stage]].shopitemprices[inputint] <= coins) {
+                        if (addToInventory(shops[shopList[stage]].shopbuyitemoptions[inputint]) == true) {
+                            coins -= shops[shopList[stage]].shopitemprices[inputint];
+                            shops[shopList[stage]].shopitemstock[inputint] -= 1;
+                            if (shops[shopList[stage]].shopitemstock[inputint] == 0) { giveOptions = true; }
+                            typeOut("\nYou went ahead and bought a " + colored(items[shops[shopList[stage]].shopbuyitemoptions[inputint]].name, "text", "magenta") + ", and paid the shop owner " + colored(to_string(shops[shopList[stage]].shopitemprices[inputint]), "text", "yellow") + " coins.\n");
                         }
                         else
-                            typeOut("You wanted to buy a " + colored(items[shopbuyitems[shops[stage]][inputint]].name, "text", "magenta") + ", but your inventory was full!\n");
+                            typeOut("You wanted to buy a " + colored(items[shops[shopList[stage]].shopbuyitemoptions[inputint]].name, "text", "magenta") + ", but your inventory was full!\n");
                     }
                     else
-                        typeOut("You wanted to buy a " + colored(items[shopbuyitems[shops[stage]][inputint]].name, "text", "magenta") + ", but you didn't have enough coins!\n");
+                        typeOut("You wanted to buy a " + colored(items[shops[shopList[stage]].shopbuyitemoptions[inputint]].name, "text", "magenta") + ", but you didn't have enough coins!\n");
                 }
                 else
-                    typeOut("You wanted to buy a " + colored(items[shopbuyitems[shops[stage]][inputint]].name, "text", "magenta") + ", but it was out of stock!\n");
+                    typeOut("You wanted to buy a " + colored(items[shops[shopList[stage]].shopbuyitemoptions[inputint]].name, "text", "magenta") + ", but it was out of stock!\n");
             }
             else
                 typeOut("The item number " + to_string(inputint) + " is not available!\n");
@@ -1054,8 +1053,8 @@ string battleVis[3] = {
 
 struct Enemy {
     int hp;
-    int attackdmg;
     int attackdurance;
+    int attackdmg;
     int type; // 0 = Spikes, 1 = Melee, 2 = Ranged
     int difficulty; // 1-10
     int dmgrange; // 0 = no range, 10 = max range
@@ -2525,7 +2524,7 @@ string playStage(bool dodialogue = true) {
     options.insert(pair<string, string>("5m", "Consult your map"));
     options.insert(pair<string, string>("6i", "View your inventory"));
     options.insert(pair<string, string>("7r", "Rest"));
-    if (shops[stage] != 0)
+    if (shopList[stage] != 0)
         specialOptions.insert(pair<string, string>("1h", "Interact with the shop"));
     if (minigames[stage] != 0)
         specialOptions.insert(pair<string, string>("2g", minigametext[minigames[stage]]));
@@ -2607,8 +2606,8 @@ bool processInput(string input) {
         rest();
         return false;
     }
-    else if (input == "h" && shops[stage] != 0) {
-        shop();
+    else if (input == "h" && shopList[stage] != 0) {
+        openShop();
         return false;
     }
     else if (input == "g" && minigames[stage] != 0) {
