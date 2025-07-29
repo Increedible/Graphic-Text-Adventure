@@ -88,7 +88,7 @@ std::vector<Enemy> opponents;
 Enemy loadEnemy(FILE* f)
 {
     Enemy out;
-    fscanf(f, "%d %d %d %d %d %d %d %d %d\n", &out.hp, &out.attackdmg, &out.attackdurance, &out.type,
+    fscanf(f, "%d %d %d %d %d %d %d %d %d\n", &out.hp, &out.attackdurance, &out.attackdmg, &out.type,
         &out.difficulty, &out.dmgrange, &out.resistance, &out.coinrewardmin, &out.coinrewardmax);
     
     loadImage<23>(f, out.vis);

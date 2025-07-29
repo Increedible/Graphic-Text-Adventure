@@ -13,7 +13,7 @@ struct saveState {
 };
 
 int stageOfSave(std::string index) {
-    std::fstream f("saves\\savefile" + index + ".txt", std::ios::in);
+    std::fstream f("saves/savefile" + index + ".txt", std::ios::in);
     std::string line;
     if (f.is_open()) {
         getline(f, line);
@@ -25,7 +25,7 @@ int stageOfSave(std::string index) {
 }
 
 std::pair<bool, saveState> loadGame(std::string index) {
-    std::fstream f("saves\\savefile" + index + ".txt", std::ios::in);
+    std::fstream f("saves/savefile" + index + ".txt", std::ios::in);
     std::vector<std::string> lines;
     std::string line;
     if (f.is_open()) {
@@ -59,7 +59,7 @@ std::pair<bool, saveState> loadGame(std::string index) {
 }
 
 bool saveGame(std::string index, saveState& s, int inventorymax) {
-    std::fstream f("saves\\savefile" + index + "temp.txt", std::ios::out);
+    std::fstream f("saves/savefile" + index + "temp.txt", std::ios::out);
     std::string fileData = "";
     fileData += std::to_string(s.stage) + "\n";
     fileData += std::to_string(s.coins) + "\n";
@@ -81,16 +81,16 @@ bool saveGame(std::string index, saveState& s, int inventorymax) {
         f.close();
         int returnint;
         if (index == "1") {
-            remove("saves\\savefile1.txt");
-            returnint = rename("saves\\savefile1temp.txt", "saves\\savefile1.txt");
+            remove("saves/savefile1.txt");
+            returnint = rename("saves/savefile1temp.txt", "saves/savefile1.txt");
         }
         if (index == "2") {
-            remove("saves\\savefile2.txt");
-            returnint = rename("saves\\savefile2temp.txt", "saves\\savefile2.txt");
+            remove("saves/savefile2.txt");
+            returnint = rename("saves/savefile2temp.txt", "saves/savefile2.txt");
         }
         if (index == "3") {
-            remove("saves\\savefile3.txt");
-            returnint = rename("saves\\savefile3temp.txt", "saves\\savefile3.txt");
+            remove("saves/savefile3.txt");
+            returnint = rename("saves/savefile3temp.txt", "saves/savefile3.txt");
         }
         return true;
     }

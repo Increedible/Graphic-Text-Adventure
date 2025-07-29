@@ -72,10 +72,26 @@ void typeOut(string text, int sleepms = 18, int aftersleep = 0) {
     for (char c : text) {
         printf("%c",c);
         fflush(stdout);
-        io.check();;
+        io.check();
         if (io.pressed[K_LEFT])skip = 1;
         if (c == '\n')skip = 0;
         if (!skip && isAlphabet(c)) {
+            MSDelay(sleepms);
+        }
+    }
+    cout << endl;
+    MSDelay(aftersleep * 1000);
+}
+
+void typeOutLine(string text, int sleepms = 18, int aftersleep = 0) {
+    bool skip = 0;
+    for (char c : text) {
+        printf("%c",c);
+        if (c!='\n') continue;
+        fflush(stdout);
+        io.check();
+        if (io.pressed[K_LEFT])skip = 1;
+        if (!skip) {
             MSDelay(sleepms);
         }
     }
@@ -88,6 +104,7 @@ string optionsNav(map<string, string> options, map<string, string> specialOption
     bool rerender = true;
     //cout << "Use up and down arrow keys to navigate, right arrow key to pick." << endl;
     set_cursor(false);
+    cout << "\n";
     do {
         if (rerender) {
             rerender = false;
@@ -1225,7 +1242,7 @@ bool battle(int opponentnmr) {
                 int afkSpikeDelayY = 0;
                 int start = clock();
                 int dt = 3000 / FPS;
-                vector<vector<int>> spikesVis(charPerRow+1, vector<int>(rows));
+                vector<vector<int>> spikesVis(charPerRow+1, vector<int>(rows+1));
                 while (attackFrames != 0 && health > 0) {
                     for (auto&i:spikesVis)fill(i.begin(),i.end(),0);
                     if (invincibilityFrames > 0) // substract invincibility
@@ -2038,7 +2055,7 @@ void moveDirection(int direction, string name) {
 bool processInput(string input) {
     if (input == "m") { 
         checkedMap = true;
-        typeOut("\n" + mapToString(), 0);
+        typeOutLine("\n" + mapToString());
         return false;
     }
     else if (input == "i") {
@@ -2102,7 +2119,7 @@ int main()
     io.init();
     // File saving
     for (int i = 1; i < 4; i++) {
-        fstream f("savefile" + to_string(i) + ".txt", ios::in);
+        fstream f("saves/savefile" + to_string(i) + ".txt", ios::in);
         if (!f.is_open()) {
             saveState s = {
                 stage, coins, stamina, sanity, health, playerDmg, playerRes, stageEncounters, inventory

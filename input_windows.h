@@ -8,8 +8,10 @@ struct my_io : base_io{
 
     // to remove the need of reallocating
     INPUT_RECORD irInBuf[128];
+    char buf[8192];
 
     void init(){
+        setvbuf(stdout, buf, _IOFBF, sizeof(buf));
         hStdin = GetStdHandle(STD_INPUT_HANDLE);
         if (hStdin == INVALID_HANDLE_VALUE){
             ErrorExit("GetStdHandle");
@@ -32,18 +34,28 @@ struct my_io : base_io{
 
     void check(){
         DWORD event_count;
+        for (bool& i:pressed){
+            i = 0;
+        }
         do {
             if (!GetNumberOfConsoleInputEvents(hStdin, &event_count)){
                 ErrorExit("CheckEventCount");
             }
             if (event_count > 0) {
-                check_sync();
+                _check_sync();
             }
         } while (event_count > 0);
     }
 
-    // check but block
     void check_sync(){
+        for (bool& i:pressed){
+            i = 0;
+        }
+        _check_sync();
+    }
+
+    // check but block
+    void _check_sync(){
         DWORD cNumRead;
         if (! ReadConsoleInput(
                 hStdin,      // input buffer handle
@@ -51,10 +63,6 @@ struct my_io : base_io{
                 128,         // size of read buffer
                 &cNumRead) ) // number of records read
             ErrorExit("ReadConsoleInput");
-
-        for (bool& i:pressed){
-            i = 0;
-        }
 
         for (DWORD i=0;i<cNumRead;i++) {
             INPUT_RECORD& event = irInBuf[i];
