@@ -60,6 +60,7 @@ struct my_io : base_io{
         if (ret == -1){
             perror("poll()");
             error_exit();
+            return 0;
         } else if (ret == 0){
             return 0;
         } else {

@@ -1,7 +1,5 @@
-game_windows.exe
-game_linux
-game_temp.cpp
-game_temp.exe
+game.exe
+game
 savefile1.txt
 savefile2.txt
 savefile3.txt
