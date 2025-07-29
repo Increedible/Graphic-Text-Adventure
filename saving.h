@@ -3,6 +3,12 @@
 #include <vector>
 struct saveState {
     int stage, coins, stamina, sanity, health, playerDmg, playerRes;
+    std::map<int,int> stageEncounters = {
+        {1, 1},             // In stage 1 ; Tutorial     
+        {10, 5},            // In stage 10 ; duelist
+        {15, 13},           // In stage 15 ; Angry man
+    };
+    std::vector<int> inventory;
 };
 
 int stageOfSave(std::string index) {
@@ -17,54 +23,55 @@ int stageOfSave(std::string index) {
         return 0;
 }
 
-bool loadGame(std::string index) {
+std::pair<bool, saveState> loadGame(std::string index) {
     std::fstream f("savefile" + index + ".txt", std::ios::in);
     std::vector<std::string> lines;
     std::string line;
     if (f.is_open()) {
+        saveState s;
         std::getline(f, line);
         while (f) {
             lines.push_back(line);
             std::getline(f, line);
         }
         f.close();
-        stage = stoi(lines[0]);
-        coins = stoi(lines[1]);
-        stamina = stoi(lines[2]);
-        sanity = stoi(lines[3]);
-        health = stoi(lines[4]);
-        playerDmg = stoi(lines[5]);
-        playerRes = stoi(lines[6]);
+        s.stage = std::stoi(lines[0]);
+        s.coins = std::stoi(lines[1]);
+        s.stamina = std::stoi(lines[2]);
+        s.sanity = std::stoi(lines[3]);
+        s.health = std::stoi(lines[4]);
+        s.playerDmg = std::stoi(lines[5]);
+        s.playerRes = std::stoi(lines[6]);
         int i = 7;
-        for (auto& x : stageEncounters) {
-            x.second = stoi(lines[i]);
+        for (auto& x : s.stageEncounters) {
+            x.second = std::stoi(lines[i]);
             i++;
         }
         for (int j = i; i < j+10; i++)
             if (lines[i] != "0") {
-                inventory.push_back(stoi(lines[i]));
+                s.inventory.push_back(std::stoi(lines[i]));
             }
-        return true;
+        return {true, s};
     }
     else
-        return false;
+        return {false, saveState()};
 }
 
-bool saveGame(string index) {
-    fstream f("savefile" + index + "temp.txt", ios::out);
-    string fileData = "";
-    fileData += to_string(stage) + "\n";
-    fileData += to_string(coins) + "\n";
-    fileData += to_string(stamina) + "\n";
-    fileData += to_string(sanity) + "\n";
-    fileData += to_string(health) + "\n";
-    fileData += to_string(playerDmg) + "\n";
-    fileData += to_string(playerRes) + "\n";
-    for (auto const& x : stageEncounters)
-        fileData += to_string(x.second) + "\n";
-    for (int i = 0; i < (int)inventory.size(); i++)
-        fileData += to_string(inventory[i]) + "\n";
-    for (int i = 0; i < (int)(inventorymax - inventory.size()); i++)
+bool saveGame(std::string index, saveState& s, int inventorymax) {
+    std::fstream f("savefile" + index + "temp.txt", std::ios::out);
+    std::string fileData = "";
+    fileData += std::to_string(s.stage) + "\n";
+    fileData += std::to_string(s.coins) + "\n";
+    fileData += std::to_string(s.stamina) + "\n";
+    fileData += std::to_string(s.sanity) + "\n";
+    fileData += std::to_string(s.health) + "\n";
+    fileData += std::to_string(s.playerDmg) + "\n";
+    fileData += std::to_string(s.playerRes) + "\n";
+    for (auto const& x : s.stageEncounters)
+        fileData += std::to_string(x.second) + "\n";
+    for (int i = 0; i < (int)s.inventory.size(); i++)
+        fileData += std::to_string(s.inventory[i]) + "\n";
+    for (int i = 0; i < (int)(inventorymax - s.inventory.size()); i++)
         fileData += "0\n";
     if (f.is_open()) {
         for (int i = 0; i < (int)fileData.size(); i++) {

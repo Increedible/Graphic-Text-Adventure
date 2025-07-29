@@ -81,7 +81,7 @@ struct Enemy {
     image <23> vis;
 };
 
-vector<Enemy> opponents;
+std::vector<Enemy> opponents;
 
 Enemy loadEnemy(FILE* f)
 {

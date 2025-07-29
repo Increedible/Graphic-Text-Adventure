@@ -62,78 +62,6 @@ string toString(char c) {
     return s;
 }
 
-string colored(string text, string type, string color, string color2 = "NULL") {
-    vector<int> values;
-    bool istext = false;
-    bool isback = false;
-    stack<string> colors;
-    if (type == "text") {
-        istext = true;
-        colors.push(color);
-    }
-    else if (type == "back") {
-        isback = true;
-        colors.push(color);
-    }
-    else if (type == "backtext") {
-        istext = true;
-        isback = true;
-        colors.push(color);
-        if (color2 == "NULL") { istext = false; }
-        else { colors.push(color2); }
-    }
-    else if (type == "textback") {
-        istext, isback = true;
-        if (color2 == "NULL") { return "ERROR : Need second color"; }
-        colors.push(color2);
-        colors.push(color);
-    }
-    else
-        return "ERROR: Unvalid type";
-    if (istext) {
-        string pickedcolor = colors.top();
-        colors.pop();
-        if (pickedcolor == "black") { values.push_back(30); }
-        else if (pickedcolor == "red") { values.push_back(31); }
-        else if (pickedcolor == "green") { values.push_back(32); }
-        else if (pickedcolor == "yellow") { values.push_back(33); }
-        else if (pickedcolor == "blue") { values.push_back(34); }
-        else if (pickedcolor == "magenta") { values.push_back(35); }
-        else if (pickedcolor == "cyan") { values.push_back(36); }
-        else if (pickedcolor == "white") { values.push_back(37); }
-        else { values.push_back(30); }
-    }
-    if (isback) {
-        string pickedcolor = colors.top();
-        colors.pop();
-        if (pickedcolor == "black") { values.push_back(40); }
-        else if (pickedcolor == "red") { values.push_back(41); }
-        else if (pickedcolor == "green") { values.push_back(42); }
-        else if (pickedcolor == "yellow") { values.push_back(43); }
-        else if (pickedcolor == "blue") { values.push_back(44); }
-        else if (pickedcolor == "magenta") { values.push_back(45); }
-        else if (pickedcolor == "cyan") { values.push_back(46); }
-        else if (pickedcolor == "white") { values.push_back(47); }
-        else { values.push_back(30); }
-    }
-    values.push_back(1);
-    string output;
-    for (int i = 0; i < (int)values.size(); i++) {
-        output += to_string(values[i]);
-        if (i < (int)values.size() - 1) { output += ';'; }
-    }
-    return ("\033[" + output + 'm' + text + "\033[0m");
-}
-
-#define PIXEL_BLACK "\033[40m \033[0m"
-#define PIXEL_RED "\033[41m \033[0m"
-#define PIXEL_GREEN "\033[42m \033[0m"
-#define PIXEL_YELLOW "\033[43m \033[0m"
-#define PIXEL_BLUE "\033[44m \033[0m"
-#define PIXEL_MAGENTA "\033[45m \033[0m"
-#define PIXEL_CYAN "\033[46m \033[0m"
-#define PIXEL_WHITE "\033[47m \033[0m"
-
 bool isAlphabet(char c) {
     string allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ12456789!@#$%^&*()<>,.''/\"";
     return allowed.find(c) != std::string::npos;
@@ -142,7 +70,8 @@ bool isAlphabet(char c) {
 void typeOut(string text, int sleepms = 18, int aftersleep = 0) {
     bool skip = 0;
     for (char c : text) {
-        cout << c;
+        printf("%c",c);
+        fflush(stdout);
         io.check();;
         if (io.pressed[K_LEFT])skip = 1;
         if (c == '\n')skip = 0;
@@ -2130,7 +2059,10 @@ bool processInput(string input) {
     }
     else if (input == "f" && stageSaves[stage] != 0) {
         typeOut("Saving your game...");
-        saveGame(currentFileIndex);
+        saveState s = {
+            stage, coins, stamina, sanity, health, playerDmg, playerRes, stageEncounters, inventory
+        };
+        saveGame(currentFileIndex, s, inventorymax);
         MSDelay(2000);
         typeOut("Game Saved! [Press Enter]");
         getCin();
@@ -2172,8 +2104,12 @@ int main()
     // File saving
     for (int i = 1; i < 4; i++) {
         fstream f("savefile" + to_string(i) + ".txt", ios::in);
-        if (!f.is_open())
-            saveGame(to_string(i)); // create default save files in non existant
+        if (!f.is_open()) {
+            saveState s = {
+                stage, coins, stamina, sanity, health, playerDmg, playerRes, stageEncounters, inventory
+            };
+            saveGame(to_string(i), s, inventorymax); // create default save files in non existant
+        }
         f.close();
     }
     typeOut("Please select a save file:");
@@ -2184,7 +2120,16 @@ int main()
     specialOptions.insert(pair<string, string>("3", "Save file 3 at " + stages[stageOfSave("3")]));
     string input = optionsNav(options, specialOptions, "Save");
     typeOut("Loading save file " + input + "...");
-    loadGame(input);
+    auto [suc, ret] = loadGame(input);
+    stage = ret.stage;
+    coins = ret.coins;
+    stamina = ret.stamina;
+    sanity = ret.sanity;
+    health = ret.health;
+    playerDmg = ret.playerDmg;
+    playerRes = ret.playerRes;
+    stageEncounters = ret.stageEncounters;
+    inventory = ret.inventory;
     currentFileIndex = input;
     MSDelay(1000);
     bool dodialogue = true;

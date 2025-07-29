@@ -73,7 +73,7 @@ struct my_io : base_io{
                             pressed_key = K_ENTER;
                             break;
                         case VK_LEFT:
-                            pressed_key = K_RIGHT;
+                            pressed_key = K_LEFT;
                             break;
                         case VK_RIGHT:
                             pressed_key = K_RIGHT;

@@ -14,10 +14,10 @@ void MSDelay(int ms) {
     #endif
 }
 
-mt19937 rng(time(0));
+std::mt19937 rng(time(0));
 // [l, r)
 int randomnum(int l, int r) {
-    uniform_int_distribution gen(l, r-1);
+    std::uniform_int_distribution gen(l, r-1);
     return gen(rng);
 }
 // [0,r)
