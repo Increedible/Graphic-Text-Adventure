@@ -1,0 +1,119 @@
+#include <windows.h>
+#include <stdio.h>
+#include "input_base.h"
+
+struct my_io : base_io{
+    HANDLE hStdin;
+    DWORD fdwSaveOldMode;
+
+    // to remove the need of reallocating
+    INPUT_RECORD irInBuf[128];
+
+    void init(){
+        hStdin = GetStdHandle(STD_INPUT_HANDLE);
+        if (hStdin == INVALID_HANDLE_VALUE){
+            ErrorExit("GetStdHandle");
+        }
+        if (!GetConsoleMode(hStdin, &fdwSaveOldMode)){
+            ErrorExit("GetConsoleMode");
+        }
+        DWORD fdwMode = ENABLE_WINDOW_INPUT;
+        if (!SetConsoleMode(hStdin, fdwMode)){
+            ErrorExit("SetConsoleMode");
+        }
+    }
+
+    void ErrorExit (char* lpszMessage){
+        fprintf(stderr, "%s\n", lpszMessage);
+        // Restore input mode on exit.
+        SetConsoleMode(hStdin, fdwSaveOldMode);
+        ExitProcess(1);
+    }
+
+    void check(){
+        DWORD event_count;
+        do {
+            if (!GetNumberOfConsoleInputEvents(hStdin, &event_count)){
+                ErrorExit("CheckEventCount");
+            }
+            if (event_count > 0) {
+                check_sync();
+            }
+        } while (event_count > 0);
+    }
+
+    // check but block
+    void check_sync(){
+        DWORD cNumRead;
+        if (! ReadConsoleInput(
+                hStdin,      // input buffer handle
+                irInBuf,     // buffer to read into
+                128,         // size of read buffer
+                &cNumRead) ) // number of records read
+            ErrorExit("ReadConsoleInput");
+
+        for (bool& i:pressed){
+            i = 0;
+        }
+
+        for (DWORD i=0;i<cNumRead;i++) {
+            INPUT_RECORD& event = irInBuf[i];
+            switch(event.EventType)
+            {
+                case KEY_EVENT: { // keyboard input
+                    KEY_EVENT_RECORD& keyEvent = event.Event.KeyEvent;
+                    if (keyEvent.bKeyDown) {
+                        // key press
+                        bool shift_pressed = keyEvent.dwControlKeyState & SHIFT_PRESSED;
+                        bool capslock_on = keyEvent.dwControlKeyState & CAPSLOCK_ON;
+                        int pressed_key;
+                        switch (keyEvent.wVirtualKeyCode)
+                        {
+                        case VK_RETURN:
+                            pressed_key = K_ENTER;
+                            break;
+                        case VK_LEFT:
+                            pressed_key = K_RIGHT;
+                            break;
+                        case VK_RIGHT:
+                            pressed_key = K_RIGHT;
+                            break;
+                        case VK_UP:
+                            pressed_key = K_UP;
+                            break;
+                        case VK_DOWN:
+                            pressed_key = K_DOWN;
+                            break;
+                        case 'A':
+                            if (shift_pressed ^ capslock_on) {
+                                pressed_key = K_A;
+                            } else {
+                                pressed_key = K_a;
+                            }
+                            break;
+                        default:
+                            pressed_key = K_OTHER;
+                            break;
+                        }
+                        pressed[pressed_key] = 1;
+                    } else {
+                        // key release
+                    }
+                    break;
+                }
+                case MOUSE_EVENT: 
+                case WINDOW_BUFFER_SIZE_EVENT:
+                case FOCUS_EVENT:
+                case MENU_EVENT:
+                    break;
+                default:
+                    ErrorExit("Unknown event type");
+                    break;
+            }
+        }
+    }
+
+    void uninit(){
+        SetConsoleMode(hStdin, fdwSaveOldMode);
+    }
+};

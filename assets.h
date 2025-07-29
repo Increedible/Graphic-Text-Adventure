@@ -27,6 +27,15 @@ int loadImage(FILE *f, image<n> &out) {
     return 0;
 }
 
+template<int n>
+void saveImage(FILE *f, image<n> &i)
+{
+    for(auto &l: i)
+    {
+        fprintf(f, "%s\n", l.c_str());
+    }
+}
+
 /// list of images used by minigames
 /// 0 ; Which ore?
 /// 1 ; First boulder empty
@@ -49,6 +58,7 @@ int loadMinigameAssets()
                 FILE* file = fopen(entry.path().string().c_str(), "r");
                 minigameVis.emplace_back();
                 loadImage<23>(file, minigameVis.back());
+                fclose(file);
             }
         }
     } catch (const fs::filesystem_error& e) {
@@ -58,9 +68,62 @@ int loadMinigameAssets()
     return 0;
 }
 
+struct Enemy {
+    int hp;
+    int attackdmg;
+    int attackdurance;
+    int type; // 0 = Spikes, 1 = Melee, 2 = Ranged
+    int difficulty; // 1-10
+    int dmgrange; // 0 = no range, 10 = max range
+    int resistance; // 0-100%
+    int coinrewardmin;
+    int coinrewardmax;
+    image <23> vis;
+};
+
+vector<Enemy> opponents;
+
+Enemy loadEnemy(FILE* f)
+{
+    Enemy out;
+    fscanf(f, "%d %d %d %d %d %d %d %d %d\n", &out.hp, &out.attackdmg, &out.attackdurance, &out.type,
+        &out.difficulty, &out.dmgrange, &out.resistance, &out.coinrewardmin, &out.coinrewardmax);
+    
+    loadImage<23>(f, out.vis);
+    return out;
+}
+
+void saveEnemy(FILE* f, Enemy out)
+{
+    fprintf(f, "%d %d %d %d %d %d %d %d %d\n", out.hp, out.attackdmg, out.attackdurance, out.type,
+        out.difficulty, out.dmgrange, out.resistance, out.coinrewardmin, out.coinrewardmax);
+    saveImage<23>(f, out.vis);
+}
+
+int loadEnemyAssets()
+{
+    const fs::path path = "assets/enemies";
+
+    try {
+        for (const auto& entry : fs::directory_iterator(path)) {
+            if (entry.is_regular_file()) {
+                FILE* file = fopen(entry.path().string().c_str(), "r");
+                opponents.push_back(loadEnemy(file));
+                fclose(file);
+            }
+        }
+    } catch (const fs::filesystem_error& e) {
+        return 1;
+    }
+
+    return 0;
+}
+
+
 /// loads all assets
 /// @return 0 if succes, otherwise 1
 int loadAssets()
 {
+    loadEnemyAssets();
     return loadMinigameAssets();
 }
