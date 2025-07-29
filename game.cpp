@@ -104,6 +104,7 @@ string optionsNav(map<string, string> options, map<string, string> specialOption
     bool rerender = true;
     //cout << "Use up and down arrow keys to navigate, right arrow key to pick." << endl;
     set_cursor(false);
+    cout << "\n";
     do {
         if (rerender) {
             rerender = false;
@@ -2118,7 +2119,7 @@ int main()
     io.init();
     // File saving
     for (int i = 1; i < 4; i++) {
-        fstream f("savefile" + to_string(i) + ".txt", ios::in);
+        fstream f("saves/savefile" + to_string(i) + ".txt", ios::in);
         if (!f.is_open()) {
             saveState s = {
                 stage, coins, stamina, sanity, health, playerDmg, playerRes, stageEncounters, inventory
