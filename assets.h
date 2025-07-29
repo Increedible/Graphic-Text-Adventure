@@ -53,13 +53,15 @@ int loadMinigameAssets()
     const fs::path path = "assets/images/minigames";
 
     try {
-        for (const auto& entry : fs::directory_iterator(path)) {
-            if (entry.is_regular_file()) {
-                FILE* file = fopen(entry.path().string().c_str(), "r");
-                minigameVis.emplace_back();
-                loadImage<23>(file, minigameVis.back());
-                fclose(file);
+        for(int i = 0;;i++) {
+            fs::path p = path / fs::path(std::to_string(i) + ".tmg");
+            if (!fs::exists(p)) {
+                break;
             }
+            FILE* file = fopen(p.string().c_str(), "r");
+            minigameVis.emplace_back();
+            loadImage<23>(file, minigameVis.back());
+            fclose(file);
         }
     } catch (const fs::filesystem_error& e) {
         return 1;
@@ -102,15 +104,17 @@ void saveEnemy(FILE* f, Enemy out)
 
 int loadEnemyAssets()
 {
-    const fs::path path = "assets/enemies";
+    const fs::path path = "assets/enemies/";
 
     try {
-        for (const auto& entry : fs::directory_iterator(path)) {
-            if (entry.is_regular_file()) {
-                FILE* file = fopen(entry.path().string().c_str(), "r");
-                opponents.push_back(loadEnemy(file));
-                fclose(file);
+        for(int i = 0;;i++) {
+            fs::path p = path / fs::path(std::string("enemy") + std::to_string(i));
+            if (!fs::exists(p)) {
+                break;
             }
+            FILE* file = fopen(p.string().c_str(), "r");
+            opponents.push_back(loadEnemy(file));
+            fclose(file);
         }
     } catch (const fs::filesystem_error& e) {
         return 1;
