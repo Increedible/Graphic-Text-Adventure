@@ -25,7 +25,7 @@ int loadImage(FILE *f, image<n> &out) {
 }
 
 template<int n>
-void saveImage(FILE *f, image<n> &i)
+void saveImage(FILE *f, const image<n> &i)
 {
     for(auto &l: i)
     {
@@ -122,28 +122,29 @@ int loadEnemyAssets()
 
 // Helper to write a string with length prefix
 void writeString(FILE* f, const std::string& str) {
-    fprintf(f, "%zu\n", str.size());
-    fwrite(str.data(), 1, str.size(), f);
-};
+    size_t len = str.size();
+    fprintf(f, "%d\n", len);              // write length first
+    fwrite(str.data(), 1, len, f);                // write raw bytes
+}
 
 // Helper to read a string with length prefix
 std::string readStringf(FILE* f) {
     size_t len;
-    fscanf(f, "%zu\n", &len);
+    fscanf(f, "%d\n", &len);               // read length
     std::string str(len, '\0');
-    fread(&str[0], 1, len, f);
+    fread(&str[0], 1, len, f);                    // read raw bytes
     return str;
-};
+}
 
-void saveStage(FILE* f, Stage s)
+void saveStage(FILE* f, const Stage &s)
 {
     // id
     fprintf(f, "%d\n", s.id);
 
     // name
-    writeString(f, s.name);
-    writeString(f, s.dialogue);
-    writeString(f, s.conclusion);
+    writeString(f, s.name.str);
+    writeString(f, s.dialogue.str);
+    writeString(f, s.conclusion.str);
 
     // directions
     for (int i = 0; i < 4; ++i)
@@ -163,7 +164,7 @@ void saveStage(FILE* f, Stage s)
     // encounter
     if (s.encounter.has_value()) {
         fprintf(f, "%d\n", s.encounter->first);
-        writeString(f, s.encounter->second);
+        writeString(f, s.encounter->second.str);
     } else {
         fprintf(f, "-1\n0\n"); // no encounter, zero-length string
     }

@@ -58,6 +58,7 @@ struct StyleString{
     void push_back(const char&c);
     StyleString operator+(const StyleString& b);
     std::string to_string();
+    std::string to_plain_string();
 };
 
 StyleString operator+(const std::string &s, const StyleString &ss);

@@ -90,7 +90,7 @@ vector<StyleString> dialogue = {
             Directions
     ========================= */
 
-vector<vector<int>> directions = {
+vector<array<int, 4>> directions = {
     //  Negative numbers mean dead ends
     //  {north, east, south, west }
         {1, -1, -1, -1},    // 0 ; Starter area
@@ -334,7 +334,7 @@ string compass[] = {
     "      S"
 };
 
-vector<vector<string>> mapvis = {
+vector<image<16>> mapvis = {
     {"2121212121212121212121212121212121",
      "2000000000000002220000000000000002",
      "1000000000000022220000000000000001",
@@ -592,7 +592,7 @@ vector<vector<string>> mapvis = {
     },
 };
 
-vector<vector<string>> maplegend = {
+vector<image<6>> maplegend = {
     {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
     {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
     {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
@@ -921,8 +921,44 @@ void music() {
     return; // Music too big on github. 
 }
 
+// used for tranferring stanges into file, not necessary for game
+Stage makeStage(int i){
+    Stage out;
+    out.id = i;
+    out.name = stages[i];
+    out.dialogue = dialogue[i];
+    out.conclusion = mapconclusion[i];
+    out.directions = directions[i];
+    out.vis = mapvis[i];
+    out.legend = maplegend[i];
+    out.needcoins = needcoins[i];
+    out.coinreward = coinrewards[i];
+    if(shops.count(i))
+        out.shop = shops[i];
+    if(minigames.count(i))
+        out.minigame = minigames[i];
+    if(stageEncounters.count(i))
+        out.encounter = std::make_pair(stageEncounters[i], stageDialogue[i]);
+    
+        
+    if(possibleEncounters[i][3] != 0)
+    for(int j = 0; j < 3; j++)
+    {
+        out.possibleEncounters.emplace_back(possibleEncounters[i][j], 1.0 / (double)possibleEncounters[i][3]);
+    }
+    return out;
+}
+
 int main()
 {
+   // for(int i = 0; i < 17; i++)
+    //{
+        //string path("assets/stages/0.stg");
+        //path += to_string(i) + ".stg";
+        FILE* f = fopen("assets/stages/0.stg", "w");
+        //saveStage(f, makeStage(i));
+        fclose(f);
+
     loadAssets();
     io.init();
     // File saving

@@ -79,6 +79,18 @@ std::string StyleString::to_string(){
     return s;
 }
 
+std::string StyleString::to_plain_string(){
+    std::string s;
+    char pc;
+    for(auto c: s){
+        if (c == '\0'){
+            s.push_back(pc);
+        }
+        pc = c;
+    }
+    return s;
+}
+
 StyleString operator+(const std::string &s, const StyleString &ss) {
     StyleString ret(s);
     ret.str += ss.str;
@@ -90,12 +102,17 @@ StyleString operator+(StyleString ss, const char* s) {
 }
 
 // return string with color code
+// require non-empty string
 StyleString colored(std::string text, Color fg, Color bg) {
     StyleString ret(text);
     std::string ctrl;
     if (fg != Color::None) ctrl += FG_COLOR[(int)fg];
     if (bg != Color::None) ctrl += BG_COLOR[(int)bg];
+    ret.str.pop_back();
+    char last_char = ret.str.back();
+    ret.str.pop_back();
     ret.str = ctrl + ret.str + COLOR_RESET;
+    ret.str.push_back(last_char);
     ret.str.push_back('\0');
     return ret;
 }
