@@ -1,4 +1,4 @@
-
+#pragma once
 #define K_A 0x41
 #define K_a 0x61
 #define K_ENTER 0x80
