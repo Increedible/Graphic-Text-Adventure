@@ -1,1 +1,1 @@
-g++ game.cpp inventory.cpp -o game
+g++ game.cpp inventory.cpp output.cpp utilities.cpp items.cpp io_utils.cpp saving.cpp -o game
