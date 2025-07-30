@@ -95,7 +95,8 @@ StyleString colored(std::string text, Color fg, Color bg) {
     std::string ctrl;
     if (fg != Color::None) ctrl += FG_COLOR[(int)fg];
     if (bg != Color::None) ctrl += BG_COLOR[(int)bg];
-    ret.str = ctrl + ret.str + COLOR_RESET + "\0";
+    ret.str = ctrl + ret.str + COLOR_RESET;
+    ret.str.push_back('\0');
     return ret;
 }
 
