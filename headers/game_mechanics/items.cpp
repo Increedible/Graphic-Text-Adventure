@@ -16,4 +16,5 @@ item items[] = {
     {3, "Wooden Planks", "A few wooden planks that can be used for crafting.", true, true, false},
     {4, "Red Balloon", "A red balloon that can be used to cheer up someone.", true, true, false},
     {5, "Oven Cookie", "A delicious cookie that restores some health when eaten.", true, false, 25},
+    // IF YOU ADD AN ITEM HERE DON'T FORGET TO UPDATE shop.h
 };

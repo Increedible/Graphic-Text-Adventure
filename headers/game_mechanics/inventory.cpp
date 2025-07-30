@@ -2,8 +2,8 @@
 #include <string>
 #include "inventory.h"
 #include "items.h"
-#include "io_utils.h"
-#include "saving.h"
+#include "../file_system/saving.h"
+#include "../misc/io_utils.h"
 
 bool Inventory::addToInventory(int item) {
     if (inventory.size() >= max_elements)

@@ -1,9 +1,10 @@
+#pragma once
 #include <vector>
 #include <iostream>
 #include "items.h"
-#include "output.h"
-#include "io_utils.h"
-#include "saving.h"
+#include "../system_io/output.h"
+#include "../file_system/saving.h"
+#include "../misc/io_utils.h"
 
 struct Purchasable {
     int itemid, buyprice, stock;
@@ -20,11 +21,12 @@ struct Shop {
             itembuyprices.push_back(i.buyprice);
             itemstock.push_back(i.stock);
         }
-        itemsellprices.assign(items.size(), 0);
+        itemsellprices.assign(6, 0); // THIS HAS TO BE CHANGED
         for (const auto& i : selllist) {
             itemsellprices[i.first] = i.second;
         }
     };
+    Shop(){};
 };
 
 void shop(my_io& io, saveState& cursave, Shop& curshop) {

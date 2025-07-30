@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <map>
-#include "inventory.h"
+#include "../game_mechanics/inventory.h"
 
 constexpr int defCoins = 10;
 constexpr int defStamina = 10;

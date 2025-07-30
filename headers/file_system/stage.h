@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <optional>
-#include "utilities.h"
+#include "../misc/utilities.h"
 
 struct Stage {
     int id;

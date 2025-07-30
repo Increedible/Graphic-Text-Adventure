@@ -1,10 +1,10 @@
 #pragma once
-#include "io_utils.h"
-#include "saving.h"
-#include "utilities.h"
-#include "assets.h"
-#include "input.h"
-#include "output.h"
+#include "../system_io/input.h"
+#include "../system_io/output.h"
+#include "../file_system/assets.h"
+#include "../file_system/saving.h"
+#include "../misc/io_utils.h"
+#include "../misc/utilities.h"
 using namespace std;
 
 const double FPS = 17.0; // Default: 15.0

@@ -9,16 +9,16 @@
 #include <unistd.h>
 #include <assert.h>
 #include <climits>
-#include "output.h"
-#include "assets.h"
-#include "utilities.h"
-#include "saving.h"
-#include "input.h"
-#include "io_utils.h"
-#include "inventory.h"
-#include "items.h"
-#include "battle.h"
-#include "shop.h"
+#include "headers/system_io/input.h"
+#include "headers/system_io/output.h"
+#include "headers/file_system/assets.h"
+#include "headers/file_system/saving.h"
+#include "headers/game_mechanics/inventory.h"
+#include "headers/game_mechanics/items.h"
+#include "headers/game_mechanics/battle.h"
+#include "headers/game_mechanics/shop.h"
+#include "headers/misc/io_utils.h"
+#include "headers/misc/utilities.h"
 using namespace std;
 
 my_io io;

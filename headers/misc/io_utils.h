@@ -1,5 +1,8 @@
 #pragma once
-
+// #include <cctype>
+// #include <vector>
+#include "../system_io/input.h"
+#include "../system_io/output.h"
 #include <string>
 
 #define PIXEL_BLACK   "\033[40m \033[0m"
@@ -28,11 +31,11 @@ enum class Color {
 
 constexpr const char *const FG_COLOR[] = {
     "\033[30m",
-    "\033[31m",
-    "\033[32m",
-    "\033[33m",
-    "\033[34m",
-    "\033[35m",
+    "\033[38;5;196m",
+    "\033[38;5;148m",
+    "\033[38;5;220m",
+    "\033[38;5;21m",
+    "\033[38;5;134m",
     "\033[36m",
     "\033[37m",
     "\033[39m"
@@ -64,9 +67,21 @@ StyleString operator+(const std::string &s, const StyleString &ss);
 StyleString operator+(StyleString ss, const char* s);
 StyleString colored(std::string text, Color fg = Color::None, Color bg = Color::None);
 void printStyle(StyleString str);
-void set_cursor(bool visible);
-void clear();
-void goBack(int b);
-int rgb_to_ansi256(int r, int g, int b);
-void printpx(int r, int g, int b);
-void newline();
+
+// wait for enter key to be pressed
+void wait_enter(my_io &io);
+void typeOut(my_io &io, const StyleString &text, int sleepms = 18, int aftersleep = 0);
+void typeOut(my_io &io, const char* text, int sleepms = 18, int aftersleep = 0);
+void typeOutLine(my_io &io, const StyleString &text, int sleepms = 18, int aftersleep = 0);
+void typeOutLine(my_io &io, const char* text, int sleepms = 18, int aftersleep = 0);
+struct Option {
+    std::string text;
+    int key;
+    Color color, selected_color;
+    Option(const std::string &text_arg,
+        int key_arg,
+        Color color_arg = Color::White,
+        Color selected_color_arg = Color::Yellow);
+};
+
+int optionsNav(my_io &io, const std::vector<Option> &options, std::string hint = "Select");

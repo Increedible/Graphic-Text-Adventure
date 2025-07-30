@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include "items.h"
-#include "input.h"
+#include "../system_io/input.h"
 
 struct saveState;
 

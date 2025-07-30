@@ -6,6 +6,74 @@
 #include "utilities.h"
 #include "io_utils.h"
 
+#define PIXEL_BLACK   "\033[40m \033[0m"
+#define PIXEL_RED     "\033[41m \033[0m"
+#define PIXEL_GREEN   "\033[42m \033[0m"
+#define PIXEL_YELLOW  "\033[43m \033[0m"
+#define PIXEL_BLUE    "\033[44m \033[0m"
+#define PIXEL_MAGENTA "\033[45m \033[0m"
+#define PIXEL_CYAN    "\033[46m \033[0m"
+#define PIXEL_WHITE   "\033[47m \033[0m"
+
+#define COLOR_RESET   "\033[0m"
+
+// string where every non-control character is seprated by \0
+
+StyleString::StyleString(){}
+
+// create StyleString with normal (no control character) string
+StyleString::StyleString(const std::string &s){
+    for (const char&c:s){
+        push_back(c);
+    }
+}
+
+void StyleString::push_back(const char&c) {
+    str.push_back(c);
+    str.push_back('\0');
+}
+
+StyleString StyleString::operator+(const StyleString& b) {
+    StyleString ret;
+    ret.str = str+b.str;
+    return ret;
+}
+
+std::string StyleString::to_string(){
+    std::string s;
+    for(auto c: s)
+        if (c != '\0')
+            s += c;      
+    return s;
+}
+
+StyleString operator+(const std::string &s, const StyleString &ss) {
+    StyleString ret(s);
+    ret.str += ss.str;
+    return ret;
+}
+
+StyleString operator+(StyleString ss, const char* s) {
+    return ss+std::string(s);
+}
+
+// return string with color code
+StyleString colored(std::string text, Color fg, Color bg) {
+    StyleString ret(text);
+    std::string ctrl;
+    if (fg != Color::None) ctrl += FG_COLOR[(int)fg];
+    if (bg != Color::None) ctrl += BG_COLOR[(int)bg];
+    ret.str = ctrl + ret.str + COLOR_RESET;
+    ret.str.push_back('\0');
+    return ret;
+}
+
+void printStyle(StyleString str){
+    for (const char *i = str.str.c_str();*i;i++) {
+        i += printf("%s",i);
+    }
+}
+
 // wait for enter key to be pressed
 void wait_enter(my_io &io) {
     do {
@@ -70,7 +138,6 @@ int optionsNav(my_io &io, const std::vector<Option> &options, std::string hint){
     bool rerender = true;
     //cout << "Use up and down arrow keys to navigate, right arrow key to pick." << endl;
     set_cursor(false);
-    printf("\n");
     do {
         if (rerender) {
             rerender = false;
