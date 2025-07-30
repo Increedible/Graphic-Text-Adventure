@@ -64,7 +64,7 @@ std::pair<bool, saveState> loadGame(std::string index) {
         }
 
         for (int j = i; i < j + 10; i++) {
-            if (lines[i] != "0") {
+            if (lines[i][0]!='-') {
                 s.inventory.inventory.push_back(std::stoi(lines[i]));
             }
         }
@@ -94,7 +94,7 @@ bool saveGame(std::string index, saveState& s, int inventorymax) {
         fileData += std::to_string(s.inventory[i]) + "\n";
 
     for (int i = 0; i < inventorymax - static_cast<int>(s.inventory.size()); i++)
-        fileData += "0\n";
+        fileData += "-\n";
 
     if (f.is_open()) {
         f << fileData;
