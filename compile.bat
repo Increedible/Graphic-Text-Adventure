@@ -1,0 +1,1 @@
+g++ game.cpp inventory.cpp -o game
