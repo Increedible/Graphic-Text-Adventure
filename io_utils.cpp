@@ -78,7 +78,7 @@ int optionsNav(my_io &io, const std::vector<Option> &options, std::string hint){
                     printStyle(colored(hint + " >\t" + options[i].text, options[i].selected_color));
                     printf("\n");
                 } else {
-                    printStyle(colored("      >\t" + options[i].text, options[i].color));
+                    printStyle(colored("      \t" + options[i].text, options[i].color));
                     printf("\n");
                 }
             }
