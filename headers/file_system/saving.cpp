@@ -65,7 +65,8 @@ std::pair<bool, saveState> loadGame(std::string index) {
 
         for (int j = i; i < j + 10; i++) {
             if (lines[i][0]!='-') {
-                s.inventory.inventory.push_back(std::stoi(lines[i]));
+                if (std::stoi(lines[i])!=0)
+                    s.inventory.inventory.push_back(std::stoi(lines[i]));
             }
         }
 

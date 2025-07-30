@@ -174,7 +174,7 @@ string minigameToString(int minigamenmr) {
             else if (minigameVis[minigamenmr][i][j] == '7')
                 os << PIXEL_CYAN;
         }
-        os << endl;
+        os << PIXEL_RESET << endl;
     }
     return os.str();
 }
@@ -504,21 +504,21 @@ vector<vector<string>> mapvis = {
 };
 
 vector<vector<string>> maplegend = {
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou",string(PIXEL_BLUE) + "\tWater"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou","T\tTreasure"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou","G\tGuard"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou","S\tShopkeeper"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou","C\tCrowd"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou","P\tPerformer"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou",string(PIXEL_RED)+ "\tMineral Ore","W\tWorkers"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou",string(PIXEL_BLUE) + string(PIXEL_RESET) + "\tWater"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou","T\tTreasure"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou","G\tGuard"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou","S\tShopkeeper"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou","C\tCrowd"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou","P\tPerformer"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou", string(PIXEL_RED) + string(PIXEL_RESET) + "\tMineral Ore","W\tWorkers"},
 };
 
 vector<StyleString> mapconclusion = {
@@ -561,6 +561,7 @@ string mapToString() {
             else 
                 os << colored(toString(mapvis[cursave.stage][i][j]), Color::Yellow, Color::Yellow).to_string();
         }
+        os << PIXEL_RESET;
         if (compass[i] != "")
             os << compass[i];
         os << "\n";
@@ -574,7 +575,7 @@ string mapToString() {
     ========================= */
 
 void rest() {
-    typeOut(io, "You decided to lie down and look up to the clear sky and rest for a bit.\nYou rest your eyes.\nResting...");
+    typeOut(io, "\nYou decided to lie down and look up to the clear sky and rest for a bit.\nYou rest your eyes.\nResting...");
     set_cursor(false);
     double progress = 0.0;
     while (progress <= 1.0) {
@@ -584,7 +585,7 @@ void rest() {
             if (i <= pos) std::cout << PIXEL_RED;
             else std::cout << PIXEL_WHITE;
         }
-        cout << " " << int(progress * 100.0) << " %\r";
+        cout << PIXEL_RESET << " " << int(progress * 100.0) << " %\r";
         cout.flush();
 
         progress += 0.01;
@@ -593,7 +594,7 @@ void rest() {
     for (int i = 0; i < 70; i++) {
         cout << PIXEL_RED;
     }
-    cout << " 100%\n";
+    cout << PIXEL_RESET << " 100%\n";
     set_cursor(true);
     cursave.stamina = defStamina;
     if (cursave.sanity > 7) {
@@ -711,6 +712,7 @@ int playStage(bool dodialogue = true) {
     if (stageSaves[cursave.stage] != 0){
         options.push_back({"Save game", -3, Color::Blue});
     }
+    cout << "\n";
     return optionsNav(io, options, "");
 }
 
@@ -836,6 +838,7 @@ int main()
 {
     loadAssets();
     io.init();
+    battle(13, cursave, respawn, io, prevstage);
     // File saving
     for (int i = 1; i < 4; i++) {
         fstream f("saves/savefile" + to_string(i) + ".txt", ios::in);

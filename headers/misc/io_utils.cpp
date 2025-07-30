@@ -6,17 +6,6 @@
 #include "utilities.h"
 #include "io_utils.h"
 
-#define PIXEL_BLACK   "\033[40m \033[0m"
-#define PIXEL_RED     "\033[41m \033[0m"
-#define PIXEL_GREEN   "\033[42m \033[0m"
-#define PIXEL_YELLOW  "\033[43m \033[0m"
-#define PIXEL_BLUE    "\033[44m \033[0m"
-#define PIXEL_MAGENTA "\033[45m \033[0m"
-#define PIXEL_CYAN    "\033[46m \033[0m"
-#define PIXEL_WHITE   "\033[47m \033[0m"
-
-#define COLOR_RESET   "\033[0m"
-
 // string where every non-control character is seprated by \0
 
 StyleString::StyleString(){}
@@ -58,12 +47,12 @@ StyleString operator+(StyleString ss, const char* s) {
 }
 
 // return string with color code
-StyleString colored(std::string text, Color fg, Color bg) {
+StyleString colored(std::string text, BetterColor fg, BetterColor bg) {
     StyleString ret(text);
     std::string ctrl;
-    if (fg != Color::None) ctrl += FG_COLOR[(int)fg];
-    if (bg != Color::None) ctrl += BG_COLOR[(int)bg];
-    ret.str = ctrl + ret.str + COLOR_RESET;
+    if (fg.value != -1) ctrl += "\033[38;5;" + std::to_string(fg.value) + "m";
+    if (bg.value != -1) ctrl += "\033[48;5;" + std::to_string(bg.value) + "m";
+    ret.str = ctrl + ret.str + PIXEL_RESET;
     ret.str.push_back('\0');
     return ret;
 }

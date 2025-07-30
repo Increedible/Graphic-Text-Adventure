@@ -7,11 +7,11 @@
 #include "../misc/utilities.h"
 using namespace std;
 
-const double FPS = 17.0; // Default: 15.0
+const double FPS = 2.0; // Default: 15.0
 const int X_SIZE = 101;
 const int Y_SIZE = 11;
 
-vector<string> battleVis = {
+const vector<string> battleVis = {
     "666666666222222222000000000444444444544444444000000000222222222666666666",
     "666666666222222222000000000444444444544444444000000000222222222666666666",
     "666666666222222222000000000444444444544444444000000000222222222666666666"
@@ -38,7 +38,7 @@ string opponentToString(int opponentnmr) {
             else if (opponents[opponentnmr].vis[i][j] == '7')
                 os << PIXEL_CYAN;
         }
-        os << endl;
+        os << PIXEL_RESET << "\n";
     }
     return os.str();
 }
@@ -49,7 +49,7 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, my_io& io, int& 
     int damage = 0;
     int speed = 0;
     bool attack = true;
-    cout << opponentToString(opponentnmr) << endl;
+    cout << opponentToString(opponentnmr) << "\n";
     typeOut(io, "You encounter an enemy! [Press Enter]");
     wait_enter(io);
     int opponenthealth = opponents[opponentnmr].hp;
@@ -93,8 +93,9 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, my_io& io, int& 
                     else if (battleVis[i][j] == '7')
                         os << PIXEL_BLACK;
                 }
+                os << PIXEL_RESET;
             }
-            cout << os.str() << endl;
+            cout << os.str() << "\n";
             bool forward = true;
             double progress = 0.0;
             do {
@@ -202,6 +203,89 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, my_io& io, int& 
             const int invincibilityFramesMax = 30;
             const int invincibilityFrameChange = 2;
             int invincibilityFrames = 0;
+            clock_t previousTime = clock();
+            const double frameDelay = 1.0 / FPS;
+            vector<vector<int>> attackVis(charPerRow+1, vector<int>(rows+1));
+
+            const auto& playerHit = [&]() {
+                if (attackVis[playerX][playerY] > 0 && attackFrames > 0) // hit?
+                    if (invincibilityFrames == 0) { // player must not be invincible
+                        invincibilityFrames = invincibilityFramesMax; // hit
+                        int attackDamage = opponents[opponentnmr].attackdmg;
+                        if (opponents[opponentnmr].dmgrange != 0) { // random damage range?
+                            attackDamage += (randomnum(opponents[opponentnmr].dmgrange + 1)) - opponents[opponentnmr].dmgrange / 2; // pick number between 1 - damage range, subtract by damage range / 2
+                        }
+                        if (cursave.health - attackDamage < 0)
+                            cursave.health = 0;
+                        else
+                            cursave.health -= attackDamage; // substract health
+                    }
+            };
+
+            const auto& screenRefresh = [&]() {
+                for (int i = 0; i < rows; i++) { // for every row
+                    for (int j = 0; j < charPerRow; j++) { // for every char in row
+                        if (i == playerY && j == playerX) {
+                            // invincibility calculation
+                            if (invincibilityFrames % invincibilityFrameChange > 0)
+                                cout << PIXEL_RED; // player got hurt and is invincible
+                            else
+                                cout << PIXEL_CYAN;
+                        }
+                        else if (attackVis[j][i] > 0)
+                            cout << PIXEL_WHITE;
+                        else
+                            cout << PIXEL_GREEN;
+                    }
+                    cout << PIXEL_RESET << "\n";
+                }
+            };
+
+            const auto& renderHealthbar = [&]() {
+                cout << "\n";
+                for (int i = 0; i < (int)charPerRow / 2 - 3; i++)
+                    cout << " ";
+                cout << "HEALTH" << "\n";
+                if (cursave.health > 0) {
+                    double healthBar = 100.0 / defHealth * cursave.health / 100.0;
+                    double barWidth = charPerRow;
+                    double pos1 = barWidth * healthBar;
+                    for (int i = 0; i < (int)barWidth; i++) {
+                        if (i <= pos1) cout << PIXEL_RED;
+                        else std::cout << PIXEL_WHITE;
+                    }
+                    cout << PIXEL_RESET << " " << cursave.health << " %  " << "\n";
+                }
+                else {
+                    for (int i = 0; i < 101; i++)
+                        cout << PIXEL_WHITE;
+                    cout << PIXEL_RESET << " 0 %    " << "\n";
+                }
+            };
+
+            const auto& inputCheck = [&]() {
+                io.check();
+                if (io.pressed[K_UP] && playerY != 0 && attackFrames > 0)
+                    playerY -= 1;
+                if (io.pressed[K_DOWN] && playerY != rows - 1 && attackFrames > 0)
+                    playerY += 1;
+                if (io.pressed[K_LEFT] && playerX != 0 && attackFrames > 0)
+                    playerX -= 1 * speedmul;
+                if (io.pressed[K_RIGHT] && playerX != charPerRow - 1 && attackFrames > 0)
+                    playerX += 1 * speedmul;
+            };
+
+            const auto& shared = [&]() {
+                playerHit();
+                screenRefresh();
+                renderHealthbar();
+                inputCheck();
+            };
+
+            const auto& sa = [&](int r, int c, int val=1)  {
+                attackVis[max(min(r, charPerRow), 0)][max(min(c, rows), 0)] = val; 
+            };
+
             if (opponents[opponentnmr].type == 0) { // is attack type spikes?
                 // map<int, int> spikesX;
                 vector<int> spikesX(charPerRow); 
@@ -221,187 +305,134 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, my_io& io, int& 
                 int spikes3Countdown = 200;
                 int afkSpikeDelayX = 0;
                 int afkSpikeDelayY = 0;
-                int start = clock();
-                int dt = 3000 / FPS;
-                vector<vector<int>> spikesVis(charPerRow+1, vector<int>(rows+1));
                 while (attackFrames != 0 && cursave.health > 0) {
-                    for (auto&i:spikesVis)fill(i.begin(),i.end(),0);
-                    if (invincibilityFrames > 0) // substract invincibility
-                        invincibilityFrames -= 1;
-                    if (spikes2Countdown > 0)
-                        spikes2Countdown -= 1;
-                    if (spikes3Countdown > 0)
-                        spikes3Countdown -= 1;
-                    attackFrames -= 1;
-                    // anti AFK for levels above 1 ; if the delay is 0
-                    if (afkSpikeDelayX == 0) {
-                        afkSpikeDelayX = (randomnum(afkSpikeDelayMaxX));
+                    clock_t currentTime = clock();
+                    double dt = double(currentTime - previousTime) / CLOCKS_PER_SEC;
+                    if (dt >= frameDelay) {
+                        previousTime = currentTime;
+                        for (auto&i:attackVis) fill(i.begin(),i.end(),0);
+                        if (invincibilityFrames > 0) // substract invincibility
+                            invincibilityFrames -= 1;
+                        if (spikes2Countdown > 0)
+                            spikes2Countdown -= 1;
+                        if (spikes3Countdown > 0)
+                            spikes3Countdown -= 1;
+                        attackFrames -= 1;
+                        // anti AFK for levels above 1 ; if the delay is 0
+                        if (afkSpikeDelayX == 0) {
+                            afkSpikeDelayX = (randomnum(afkSpikeDelayMaxX));
+                            if (opponents[opponentnmr].difficulty > 1) {
+                                int point1 = playerX;
+                                if (spikesX[point1] == 0) // is this spike already claimed?
+                                    spikesX[point1] = rows * spikeMove + (randomnum(afkSpikeDelayMaxX)) * spikeMove; // Fall ; with custom delay
+                            }
+                        }
+                        else
+                            afkSpikeDelayX -= 1;
+                        if (afkSpikeDelayY == 0) {
+                            afkSpikeDelayY = (randomnum(afkSpikeDelayMaxY));
+                            if (opponents[opponentnmr].difficulty > 1) {
+                                int point2 = playerY;
+                                if (spikesY[point2] == 0) // is this spike already claimed?
+                                    spikesY[point2] = charPerRow * spikeMove; // no delay here, just immidiate fall
+                            }
+                        }
+                        else
+                            afkSpikeDelayY -= 1;
+                        // spikes X
+                        if (randomnum(chanceofspike) == 0) { // Is there going to be spike(s) summoned?
+                            for (int i = 0; i < ammountSpikesX; i++) {
+                                int point3 = randomnum(charPerRow); // Grab random spike pos
+                                if (spikesX[point3] == 0) // is this spike already claimed?
+                                    spikesX[point3] = rows * spikeMove + (randomnum(maxSpikeCooldown)) * spikeMove;
+                            }
+                        }
+                        // spikes Y
                         if (opponents[opponentnmr].difficulty > 1) {
-                            int point1 = playerX;
-                            if (spikesX[point1] == 0) // is this spike already claimed?
-                                spikesX[point1] = rows * spikeMove + (randomnum(afkSpikeDelayMaxX)) * spikeMove; // Fall ; with custom delay
+                            for (int i = 0; i < ammountSpikesY; i++) {
+                                int point4 = randomnum(rows); // Grab random spike pos
+                                if (spikesY[point4] == 0) // is this spike already claimed?
+                                    spikesY[point4] = charPerRow * spikeMove;
+                            }
                         }
-                    }
-                    else
-                        afkSpikeDelayX -= 1;
-                    if (afkSpikeDelayY == 0) {
-                        afkSpikeDelayY = (randomnum(afkSpikeDelayMaxY));
+                        if (opponents[opponentnmr].difficulty > 2 && spikes2Countdown == 0) {
+                            for (int i = 0; i < ammountSpikesY; i++) {
+                                int point5 = randomnum(rows); // Grab random spike pos
+                                if (spikesY2[point5] == 0) // is this spike already claimed?
+                                    spikesY2[point5] = charPerRow * spikeMove;
+                            }
+                        }
+                        if (opponents[opponentnmr].difficulty > 3 && spikes3Countdown == 0) {
+                            for (int i = 0; i < ammountSpikesY; i++) {
+                                int point6 = randomnum(rows); // Grab random spike pos
+                                if (spikesY3[point6] == 0) // is this spike already claimed?
+                                    spikesY3[point6] = charPerRow * spikeMove;
+                            }
+                        }
+                        // spike update
+                        // X
+                        for (int x=0; x<charPerRow; x++)
+                        {
+                            if (spikesX[x] > 0) {
+                                int value = spikesX[x] / spikeMove;
+                                if (value > rows - 1)
+                                    sa(x, 0);
+                                else
+                                    sa(x, rows - value);
+                                spikesX[x] -= 1;
+                            }
+                        }
+                        // Y 1
                         if (opponents[opponentnmr].difficulty > 1) {
-                            int point2 = playerY;
-                            if (spikesY[point2] == 0) // is this spike already claimed?
-                                spikesY[point2] = charPerRow * spikeMove; // no delay here, just immidiate fall
-                        }
-                    }
-                    else
-                        afkSpikeDelayY -= 1;
-                    // spikes X
-                    if (randomnum(chanceofspike) == 0) { // Is there going to be spike(s) summoned?
-                        for (int i = 0; i < ammountSpikesX; i++) {
-                            int point3 = randomnum(charPerRow); // Grab random spike pos
-                            if (spikesX[point3] == 0) // is this spike already claimed?
-                                spikesX[point3] = rows * spikeMove + (randomnum(maxSpikeCooldown)) * spikeMove;
-                        }
-                    }
-                    // spikes Y
-                    if (opponents[opponentnmr].difficulty > 1) {
-                        for (int i = 0; i < ammountSpikesY; i++) {
-                            int point4 = randomnum(rows); // Grab random spike pos
-                            if (spikesY[point4] == 0) // is this spike already claimed?
-                                spikesY[point4] = charPerRow * spikeMove;
-                        }
-                    }
-                    if (opponents[opponentnmr].difficulty > 2 && spikes2Countdown == 0) {
-                        for (int i = 0; i < ammountSpikesY; i++) {
-                            int point5 = randomnum(rows); // Grab random spike pos
-                            if (spikesY2[point5] == 0) // is this spike already claimed?
-                                spikesY2[point5] = charPerRow * spikeMove;
-                        }
-                    }
-                    if (opponents[opponentnmr].difficulty > 3 && spikes3Countdown == 0) {
-                        for (int i = 0; i < ammountSpikesY; i++) {
-                            int point6 = randomnum(rows); // Grab random spike pos
-                            if (spikesY3[point6] == 0) // is this spike already claimed?
-                                spikesY3[point6] = charPerRow * spikeMove;
-                        }
-                    }
-                    // spike update
-                    // X
-                    for (int x=0; x<charPerRow; x++)
-                    {
-                        if (spikesX[x] > 0) {
-                            int value = spikesX[x] / spikeMove;
-                            if (value > rows - 1)
-                                spikesVis[x][0] = 1;
-                            else
-                                spikesVis[x][rows - value] = 1;
-                            spikesX[x] -= 1;
-                        }
-                    }
-                    // Y 1
-                    if (opponents[opponentnmr].difficulty > 1) {
-                        for (int x=0;x<rows;x++)
-                        {
-                            if (spikesY[x] > 0) {
-                                int value = spikesY[x] / spikeMove;
-                                if (value > charPerRow - 1)
-                                    spikesVis[0][x] = 1;
-                                else
-                                    spikesVis[charPerRow - value][x] = 1;
-                                spikesY[x] -= 1;
+                            for (int x=0;x<rows;x++)
+                            {
+                                if (spikesY[x] > 0) {
+                                    int value = spikesY[x] / spikeMove;
+                                    if (value > charPerRow - 1)
+                                        sa(0,x);
+                                    else
+                                        sa(charPerRow - value, x);
+                                    spikesY[x] -= 1;
+                                }
                             }
                         }
-                    }
-                    // Y 2
-                    if (opponents[opponentnmr].difficulty > 2) {
-                        for (int x=0;x<rows;x++)
-                        {
-                            if (spikesY2[x] > 0) {
-                                int value = spikesY2[x] / spikeMove;
-                                if (value > charPerRow - 1)
-                                    spikesVis[0][x] = 1;
-                                else
-                                    spikesVis[charPerRow - value][x] = 1;
-                                spikesY[x] -= 1;
+                        // Y 2
+                        if (opponents[opponentnmr].difficulty > 2) {
+                            for (int x=0;x<rows;x++)
+                            {
+                                if (spikesY2[x] > 0) {
+                                    int value = spikesY2[x] / spikeMove;
+                                    if (value > charPerRow - 1)
+                                        sa(0, x);
+                                    else
+                                        sa(charPerRow - value, x);
+                                    spikesY[x] -= 1;
+                                }
                             }
                         }
-                    }
-                    // Y 3
-                    if (opponents[opponentnmr].difficulty > 3) {
-                        for (int x=0;x<rows;x++)
-                        {
-                            if (spikesY3[x] > 0) {
-                                int value = spikesY3[x] / spikeMove;
-                                if (value > charPerRow - 1)
-                                    spikesVis[0][x] = 1;
-                                else
-                                    spikesVis[charPerRow - value][x] = 1;
-                                spikesY[x] -= 1;
+                        // Y 3
+                        if (opponents[opponentnmr].difficulty > 3) {
+                            for (int x=0;x<rows;x++)
+                            {
+                                if (spikesY3[x] > 0) {
+                                    int value = spikesY3[x] / spikeMove;
+                                    if (value > charPerRow - 1)
+                                        sa(0, x);
+                                    else
+                                        sa(charPerRow - value, x);
+                                    spikesY[x] -= 1;
+                                }
                             }
                         }
+                        shared();
+                        goBack(rows + 3);
+                    } else {
+                        double timeLeft = frameDelay - dt;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(int(timeLeft * 1000)));
                     }
-                    if (spikesVis[playerX][playerY] == 1 && attackFrames > 0) // hit?
-                        if (invincibilityFrames == 0) { // player must not be invincible
-                            invincibilityFrames = invincibilityFramesMax; // hit
-                            int attackDamage = opponents[opponentnmr].attackdmg;
-                            if (opponents[opponentnmr].dmgrange != 0) { // random damage range?
-                                attackDamage += (randomnum(opponents[opponentnmr].dmgrange + 1)) - opponents[opponentnmr].dmgrange / 2; // pick number between 1 - damage range, subtract by damage range / 2
-                            }
-                            if (cursave.health - attackDamage < 0)
-                                cursave.health = 0;
-                            else
-                                cursave.health -= attackDamage; // substract health
-                        }
-                    // screen refresh
-                    for (int i = 0; i < rows; i++) { // for every row
-                        for (int j = 0; j < charPerRow; j++) { // for every char in row
-                            if (i == playerY && j == playerX) {
-                                // invincibility calculation
-                                if (invincibilityFrames % invincibilityFrameChange > 0)
-                                    cout << PIXEL_RED; // player got hurt and is invincible
-                                else
-                                    cout << PIXEL_CYAN;
-                            }
-                            else if (spikesVis[j][i] == 1)
-                                cout << PIXEL_WHITE;
-                            else
-                                cout << PIXEL_GREEN;
-                        }
-                        cout << endl;
-                    }
-                    io.check();
-                    if (io.pressed[K_UP] && playerY != 0 && attackFrames > 0)
-                        playerY -= 1;
-                    if (io.pressed[K_DOWN] && playerY != rows - 1 && attackFrames > 0)
-                        playerY += 1;
-                    if (io.pressed[K_LEFT] && playerX != 0 && attackFrames > 0)
-                        playerX -= 1 * speedmul;
-                    if (io.pressed[K_RIGHT] && playerX != charPerRow - 1 && attackFrames > 0)
-                        playerX += 1 * speedmul;
-                    // render health bar
-                    cout << endl;
-                    for (int i = 0; i < (int)charPerRow / 2 - 3; i++)
-                        cout << " ";
-                    cout << "HEALTH" << endl;
-                    if (cursave.health > 0) {
-                        double healthBar = 100.0 / defHealth * cursave.health / 100.0;
-                        double barWidth = charPerRow;
-                        double pos1 = barWidth * healthBar;
-                        for (int i = 0; i < (int)barWidth; i++) {
-                            if (i <= pos1) cout << PIXEL_RED;
-                            else std::cout << PIXEL_WHITE;
-                        }
-                        cout << " " << cursave.health << " %  " << endl;
-                    }
-                    else {
-                        for (int i = 0; i < 101; i++)
-                            cout << PIXEL_WHITE;
-                        cout << " 0 %    " << endl;
-                    }
-                    goBack(rows + 3);
-                    MSDelay(dt);
                 }
                 for (int i = 0; i < rows + 3; i++) // for every row + healthbar
-                    cout << endl;
+                    cout << "\n";
             }
             if (opponents[opponentnmr].type == 1) { // is attack type bombs?
                 map<int, int[2]> bombs;
@@ -444,270 +475,218 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, my_io& io, int& 
                     ammountbombs = 6;
                 if (opponents[opponentnmr].difficulty > 4)
                     ammountbombs = opponents[opponentnmr].difficulty;
-                int start = clock();
-                int dt = 1000 / FPS;
+                
                 while (attackFrames > 0 && cursave.health > 0) {
-                    map<int, map<int, int>> bombsVis;
-                    if (invincibilityFrames > 0) // substract invincibility
-                        invincibilityFrames -= 1;
-                    attackFrames -= 1;
-                    // bombs
-                    if (randomnum(chanceofbomb) == 0) { // Is there going to be a bomb summoned?
-                        for (int i = 0; i < ammountbombs; i++) {
-                            int point = randomnum(charPerRow); // Grab random bomb pos
-                            if (bombs[point][0] == 0) { // is this bomb already claimed?
-                                bombs[point][0] = rows * bombMove + (randomnum(maxBombCooldown)) * bombMove;
-                                bombs[point][1] = 0 - (rows - 1 - randomnum((int)(rows - rows / 3)));
+                    clock_t currentTime = clock();
+                    double dt = double(currentTime - previousTime) / CLOCKS_PER_SEC;
+                    if (dt >= frameDelay) {
+                        previousTime = currentTime;
+                        for (auto&i:attackVis) fill(i.begin(),i.end(),0);
+                        if (invincibilityFrames > 0) // substract invincibility
+                            invincibilityFrames -= 1;
+                        attackFrames -= 1;
+                        // bombs
+                        if (randomnum(chanceofbomb) == 0) { // Is there going to be a bomb summoned?
+                            for (int i = 0; i < ammountbombs; i++) {
+                                int point = randomnum(charPerRow); // Grab random bomb pos
+                                if (bombs[point][0] == 0) { // is this bomb already claimed?
+                                    bombs[point][0] = rows * bombMove + (randomnum(maxBombCooldown)) * bombMove;
+                                    bombs[point][1] = 0 - (rows - 1 - randomnum((int)(rows - rows / 3)));
+                                }
                             }
                         }
-                    }
-                    // upgraded    id   not upgraded
-                    // 000000000        000000000
-                    // 000000000        000000000
-                    // 000010000    0   000010000
-                    // 000000000        000000000
-                    // 000000000        000000000
-                    
-                    // 000000000        000000000
-                    // 000111000        000010000
-                    // 000101000    1   000101000
-                    // 000111000        000010000
-                    // 000000000        000000000
-                    
-                    // 000111000        000000000
-                    // 001101100        000111000
-                    // 011000110    2   001000100
-                    // 001101100        000111000
-                    // 000111000        000000000
+                        // upgraded    id   not upgraded
+                        // 000000000        000000000
+                        // 000000000        000000000
+                        // 000010000    0   000010000
+                        // 000000000        000000000
+                        // 000000000        000000000
+                        
+                        // 000000000        000000000
+                        // 000111000        000010000
+                        // 000101000    1   000101000
+                        // 000111000        000010000
+                        // 000000000        000000000
+                        
+                        // 000111000        000000000
+                        // 001101100        000111000
+                        // 011000110    2   001000100
+                        // 001101100        000111000
+                        // 000111000        000000000
 
-                    // 0000000000000        0000000000000
-                    // 0000111110000        0000011100000
-                    // 0001100011000        0000100010000
-                    // 0011000001100    3   0001000001000
-                    // 0001100011000        0000100010000
-                    // 0000111110000        0000011100000
-                    // 0000000000000        0000000000000
+                        // 0000000000000        0000000000000
+                        // 0000111110000        0000011100000
+                        // 0001100011000        0000100010000
+                        // 0011000001100    3   0001000001000
+                        // 0001100011000        0000100010000
+                        // 0000111110000        0000011100000
+                        // 0000000000000        0000000000000
 
-                    // bomb update
-                    for (auto const& x : bombs)
-                    {
-                        if (bombs[x.first][0] > 0) {
-                            int value = bombs[x.first][0] / bombMove;
-                            if (bombs[x.first][1] < 0){ 
-                                if (value == 0 - bombs[x.first][1])
-                                    bombs[x.first][1] = 0;
-                                else {
-                                    if (value > rows - 1)
-                                        bombsVis[x.first][0] = 1;
-                                    else
-                                        bombsVis[x.first][rows - value] = 1;
+                        // bomb update
+                        for (auto const& x : bombs)
+                        {
+                            if (bombs[x.first][0] > 0) {
+                                int value = bombs[x.first][0] / bombMove;
+                                if (bombs[x.first][1] < 0){ 
+                                    if (value == 0 - bombs[x.first][1])
+                                        bombs[x.first][1] = 0;
+                                    else {
+                                        if (value > rows - 1)
+                                            sa(x.first,0);
+                                        else
+                                            sa(x.first,rows - value);
+                                    }
                                 }
+                                else if (bombs[x.first][1] >= 0) {
+                                    if (bombs[x.first][1] - 1 > 0)
+                                        if (bombs[x.first][1] - 1 < 3)
+                                            value += bombs[x.first][1] - 1;
+                                        else
+                                            value += 2;
+                                    int value2 = (int)bombs[x.first][1] / explodeMove;
+                                    if (value2 == 0)
+                                        sa(x.first,value);
+                                    if (value2 == 1) {
+                                        if (upgradedBombs) {
+                                            sa(x.first - 1,value - 1);
+                                            sa(x.first,value - 1);
+                                            sa(x.first + 1,value - 1);
+                                            sa(x.first - 1,value);
+                                            sa(x.first + 1,value);
+                                            sa(x.first - 1,value + 1);
+                                            sa(x.first,value + 1);
+                                            sa(x.first + 1,value + 1);
+                                        }
+                                        else {
+                                            sa(x.first, value - 1);
+                                            sa(x.first - 1, value);
+                                            sa(x.first + 1, value);
+                                            sa(x.first, value + 1);
+                                        }
+                                    }
+                                    if (value2 == 2) {
+                                        if (upgradedBombs) {
+                                            sa(x.first - 1, value - 2);
+                                            sa(x.first, value - 2);
+                                            sa(x.first + 1, value - 2);
+                                            sa(x.first - 2, value - 1);
+                                            sa(x.first - 1, value - 1);
+                                            sa(x.first + 1, value - 1);
+                                            sa(x.first + 2, value - 1);
+                                            sa(x.first + 3, value);
+                                            sa(x.first + 2, value);
+                                            sa(x.first - 2, value);
+                                            sa(x.first - 3, value);
+                                            sa(x.first - 2, value + 1);
+                                            sa(x.first - 1, value + 1);
+                                            sa(x.first + 1, value + 1);
+                                            sa(x.first + 2, value + 1);
+                                            sa(x.first - 1, value + 2);
+                                            sa(x.first, value + 2);
+                                            sa(x.first + 1, value + 2);
+                                        }
+                                        else {
+                                            sa(x.first - 1, value - 1);
+                                            sa(x.first, value - 1);
+                                            sa(x.first + 1, value - 1);
+                                            sa(x.first - 2, value);
+                                            sa(x.first + 2, value);
+                                            sa(x.first - 1, value + 1);
+                                            sa(x.first, value + 1);
+                                            sa(x.first + 1, value + 1);
+                                        }
+                                    }
+                                    if (value2 == 3) {
+                                        if (upgradedBombs) {
+                                            sa(x.first - 2, value - 2);
+                                            sa(x.first - 1, value - 2);
+                                            sa(x.first, value - 2);
+                                            sa(x.first + 1, value - 2);
+                                            sa(x.first + 2, value - 2);
+                                            sa(x.first - 3, value - 1);
+                                            sa(x.first - 2, value - 1);
+                                            sa(x.first + 2, value - 1);
+                                            sa(x.first + 3, value - 1);
+                                            sa(x.first + 4, value);
+                                            sa(x.first + 3, value);
+                                            sa(x.first - 3, value);
+                                            sa(x.first - 4, value);
+                                            sa(x.first - 3, value + 1);
+                                            sa(x.first - 2, value + 1);
+                                            sa(x.first + 2, value + 1);
+                                            sa(x.first + 3, value + 1);
+                                            sa(x.first - 2, value + 2);
+                                            sa(x.first - 1, value + 2);
+                                            sa(x.first, value + 2);
+                                            sa(x.first + 1, value + 2);
+                                            sa(x.first + 2, value + 2);
+                                        }
+                                        else {
+                                            sa(x.first - 1, value - 2);
+                                            sa(x.first, value - 2);
+                                            sa(x.first + 1, value - 2);
+                                            sa(x.first - 2, value - 1);
+                                            sa(x.first + 2, value - 1);
+                                            sa(x.first - 3, value);
+                                            sa(x.first + 3, value);
+                                            sa(x.first - 2, value + 1);
+                                            sa(x.first + 2, value + 1);
+                                            sa(x.first - 1, value + 2);
+                                            sa(x.first, value + 2);
+                                            sa(x.first + 1, value + 2);
+                                        }
+                                    }
+                                    bombs[x.first][1] += 1;
+                                }
+                                bombs[x.first][0] -= 1;
                             }
-                            else if (bombs[x.first][1] >= 0) {
-                                if (bombs[x.first][1] - 1 > 0)
-                                    if (bombs[x.first][1] - 1 < 3)
-                                        value += bombs[x.first][1] - 1;
-                                    else
-                                        value += 2;
-                                int value2 = (int)bombs[x.first][1] / explodeMove;
-                                if (value2 == 0)
-                                    bombsVis[x.first][value] = 1;
-                                if (value2 == 1) {
-                                    if (upgradedBombs) {
-                                        bombsVis[x.first - 1][value - 1] = 1;
-                                        bombsVis[x.first][value - 1] = 1;
-                                        bombsVis[x.first + 1][value - 1] = 1;
-                                        bombsVis[x.first - 1][value] = 1;
-                                        bombsVis[x.first + 1][value] = 1;
-                                        bombsVis[x.first - 1][value + 1] = 1;
-                                        bombsVis[x.first][value + 1] = 1;
-                                        bombsVis[x.first + 1][value + 1] = 1;
-                                    }
-                                    else {
-                                        bombsVis[x.first][value - 1] = 1;
-                                        bombsVis[x.first - 1][value] = 1;
-                                        bombsVis[x.first + 1][value] = 1;
-                                        bombsVis[x.first][value + 1] = 1;
-                                    }
-                                }
-                                if (value2 == 2) {
-                                    if (upgradedBombs) {
-                                        bombsVis[x.first - 1][value - 2] = 1;
-                                        bombsVis[x.first][value - 2] = 1;
-                                        bombsVis[x.first + 1][value - 2] = 1;
-                                        bombsVis[x.first - 2][value - 1] = 1;
-                                        bombsVis[x.first - 1][value - 1] = 1;
-                                        bombsVis[x.first + 1][value - 1] = 1;
-                                        bombsVis[x.first + 2][value - 1] = 1;
-                                        bombsVis[x.first + 3][value] = 1;
-                                        bombsVis[x.first + 2][value] = 1;
-                                        bombsVis[x.first - 2][value] = 1;
-                                        bombsVis[x.first - 3][value] = 1;
-                                        bombsVis[x.first - 2][value + 1] = 1;
-                                        bombsVis[x.first - 1][value + 1] = 1;
-                                        bombsVis[x.first + 1][value + 1] = 1;
-                                        bombsVis[x.first + 2][value + 1] = 1;
-                                        bombsVis[x.first - 1][value + 2] = 1;
-                                        bombsVis[x.first][value + 2] = 1;
-                                        bombsVis[x.first + 1][value + 2] = 1;
-                                    }
-                                    else {
-                                        bombsVis[x.first - 1][value - 1] = 1;
-                                        bombsVis[x.first][value - 1] = 1;
-                                        bombsVis[x.first + 1][value - 1] = 1;
-                                        bombsVis[x.first - 2][value] = 1;
-                                        bombsVis[x.first + 2][value] = 1;
-                                        bombsVis[x.first - 1][value + 1] = 1;
-                                        bombsVis[x.first][value + 1] = 1;
-                                        bombsVis[x.first + 1][value + 1] = 1;
-                                    }
-                                }
-                                if (value2 == 3) {
-                                    if (upgradedBombs) {
-                                        bombsVis[x.first - 2][value - 2] = 1;
-                                        bombsVis[x.first - 1][value - 2] = 1;
-                                        bombsVis[x.first][value - 2] = 1;
-                                        bombsVis[x.first + 1][value - 2] = 1;
-                                        bombsVis[x.first + 2][value - 2] = 1;
-                                        bombsVis[x.first - 3][value - 1] = 1;
-                                        bombsVis[x.first - 2][value - 1] = 1;
-                                        bombsVis[x.first + 2][value - 1] = 1;
-                                        bombsVis[x.first + 3][value - 1] = 1;
-                                        bombsVis[x.first + 4][value] = 1;
-                                        bombsVis[x.first + 3][value] = 1;
-                                        bombsVis[x.first - 3][value] = 1;
-                                        bombsVis[x.first - 4][value] = 1;
-                                        bombsVis[x.first - 3][value + 1] = 1;
-                                        bombsVis[x.first - 2][value + 1] = 1;
-                                        bombsVis[x.first + 2][value + 1] = 1;
-                                        bombsVis[x.first + 3][value + 1] = 1;
-                                        bombsVis[x.first - 2][value + 2] = 1;
-                                        bombsVis[x.first - 1][value + 2] = 1;
-                                        bombsVis[x.first][value + 2] = 1;
-                                        bombsVis[x.first + 1][value + 2] = 1;
-                                        bombsVis[x.first + 2][value + 2] = 1;
-                                    }
-                                    else {
-                                        bombsVis[x.first - 1][value - 2] = 1;
-                                        bombsVis[x.first][value - 2] = 1;
-                                        bombsVis[x.first + 1][value - 2] = 1;
-                                        bombsVis[x.first - 2][value - 1] = 1;
-                                        bombsVis[x.first + 2][value - 1] = 1;
-                                        bombsVis[x.first - 3][value] = 1;
-                                        bombsVis[x.first + 3][value] = 1;
-                                        bombsVis[x.first - 2][value + 1] = 1;
-                                        bombsVis[x.first + 2][value + 1] = 1;
-                                        bombsVis[x.first - 1][value + 2] = 1;
-                                        bombsVis[x.first][value + 2] = 1;
-                                        bombsVis[x.first + 1][value + 2] = 1;
-                                    }
-                                }
-                                bombs[x.first][1] += 1;
-                            }
-                            bombs[x.first][0] -= 1;
                         }
-                    }
-                    // for levels above 1, bottom row snake
-                    if (snakemove > 0) {
-                        if (snake2activate > 0)
-                            snake2activate -= 1; // frame countdown for snake 2
-                        // summon new part of body
-                        int value = snakepos / snakemove;
-                        snake[value] = snakedurance;
-                        if (snakepos >= charPerRow * snakemove)
-                            snakepos = 0;
-                        else
-                            snakepos += 1;
-                        if (snake2activate == 0) {
-                            int value2 = snake2pos / snakemove;
-                            snake2[value2] = snakedurance;
-                            if (snake2pos <= 0)
-                                snake2pos = charPerRow * snakemove;
+                        // for levels above 1, bottom row snake
+                        if (snakemove > 0) {
+                            if (snake2activate > 0)
+                                snake2activate -= 1; // frame countdown for snake 2
+                            // summon new part of body
+                            int value = snakepos / snakemove;
+                            snake[value] = snakedurance;
+                            if (snakepos >= charPerRow * snakemove)
+                                snakepos = 0;
                             else
-                                snake2pos -= 1;
-                        }
-                        // update and render snake body
-                        for (auto const& x : snake) {
-                            if (snake[x.first] > 0) {
-                                bombsVis[x.first][rows - 1] = 1;
-                                snake[x.first] -= 1;
-                            }
-                        }
-                        if (snake2activate == 0) {
-                            for (auto const& x : snake2) {
-                                if (snake2[x.first] > 0) {
-                                    bombsVis[x.first][rows - 2] = 1;
-                                    snake2[x.first] -= 1;
-                                }
-                            }
-                        }
-                    }
-                    if (bombsVis[playerX][playerY] == 1 && attackFrames > 0) // hit?
-                        if (invincibilityFrames == 0) { // player must not be invincible
-                            invincibilityFrames = invincibilityFramesMax; // hit
-                            int attackDamage = opponents[opponentnmr].attackdmg;
-                            if (opponents[opponentnmr].dmgrange != 0) { // random damage range?
-                                attackDamage += (randomnum(opponents[opponentnmr].dmgrange + 1)) - opponents[opponentnmr].dmgrange / 2; // pick number between 1 - damage range, subtract by damage range / 2
-                            }
-                            if (cursave.health - attackDamage < 0)
-                                cursave.health = 0;
-                            else
-                                cursave.health -= attackDamage; // substract health
-                        }
-                    // screen refresh
-                    for (int i = 0; i < rows; i++) { // for every row
-                        for (int j = 0; j < charPerRow; j++) { // for every char in row
-                            if (i == playerY && j == playerX) {
-                                // invincibility calculation
-                                if (invincibilityFrames % invincibilityFrameChange > 0)
-                                    cout << PIXEL_RED; // player got hurt and is invincible
+                                snakepos += 1;
+                            if (snake2activate == 0) {
+                                int value2 = snake2pos / snakemove;
+                                snake2[value2] = snakedurance;
+                                if (snake2pos <= 0)
+                                    snake2pos = charPerRow * snakemove;
                                 else
-                                    cout << PIXEL_CYAN;
+                                    snake2pos -= 1;
                             }
-                            else if (bombsVis[j][i] == 1)
-                                cout << PIXEL_WHITE;
-                            else
-                                cout << PIXEL_GREEN;
+                            // update and render snake body
+                            for (auto const& x : snake) {
+                                if (snake[x.first] > 0) {
+                                    sa(x.first, rows - 1);
+                                    snake[x.first] -= 1;
+                                }
+                            }
+                            if (snake2activate == 0) {
+                                for (auto const& x : snake2) {
+                                    if (snake2[x.first] > 0) {
+                                        sa(x.first, rows - 2);
+                                        snake2[x.first] -= 1;
+                                    }
+                                }
+                            }
                         }
-                        cout << "\n";
+                        shared();
+                        goBack(rows + 3);
+                    } else {
+                        double timeLeft = frameDelay - dt;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(int(timeLeft * 1000)));
                     }
-                    io.check();
-                    if (io.pressed[K_UP] && playerY != 0 && attackFrames > 0)
-                        playerY -= 1;
-                    if (io.pressed[K_DOWN] && playerY != rows - 1 && attackFrames > 0)
-                        playerY += 1;
-                    if (io.pressed[K_LEFT] && playerX != 0 && attackFrames > 0)
-                        playerX -= 1 * speedmul;
-                    if (io.pressed[K_RIGHT] && playerX != charPerRow - 1 && attackFrames > 0)
-                        playerX += 1 * speedmul; 
-                    // render health bar
-                    cout << endl;
-                    for (int i = 0; i < (int)charPerRow / 2 - 3; i++)
-                        cout << " ";
-                    cout << "HEALTH" << endl;
-                    if (cursave.health > 0) {
-                        double healthBar = 100.0 / defHealth * cursave.health / 100.0;
-                        double barWidth = charPerRow;
-                        double pos1 = barWidth * healthBar;
-                        for (int i = 0; i < (int)barWidth; i++) {
-                            if (i <= pos1) cout << PIXEL_RED;
-                            else std::cout << PIXEL_WHITE;
-                        }
-                        cout << " " << cursave.health << " %  " << endl;
-                    }
-                    else {
-                        for (int i = 0; i < 101; i++)
-                            cout << PIXEL_WHITE;
-                        cout << " 0 %    " << endl;
-                    }
-                    goBack(rows + 3);
-                    MSDelay(dt);
                 }
                 for (int i = 0; i < rows + 3; i++) // for every row + healthbar
-                    cout << endl;
+                    cout << "\n";
             }
-            if (opponents[opponentnmr].type == 2) { // is attack type snakes? 
-                map<int, map<int, int>> snakes; // snakes[X][Y] -> duration
+            if (opponents[opponentnmr].type == 2) { // is attack type snakes?
                 const int randomSnakeCountdown = 100;
                 const int randomSnakeMoveMax = 3;
                 int randomSnakeIgnorance = 3;
@@ -734,125 +713,70 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, my_io& io, int& 
                 }
                 const int snakeduranceX = 1 * opponents[opponentnmr].difficulty;
                 const int snakeduranceY = 5 * opponents[opponentnmr].difficulty;
-                int start = clock();
-                int dt = 1000 / FPS;
                 while (attackFrames != 0 && cursave.health > 0) {
-                    if (invincibilityFrames > 0) // substract invincibility
-                        invincibilityFrames -= 1;
-                    attackFrames -= 1;
-                    // update snake countdowns and summon new parts for X
-                    for (int i = 0; i < charPerRow; i++) {
-                        if (snakeMoveX[i] > 0) {
-                            if (positionsX[i] < 0) {
-                                positionsX[i] += 1;
-                            }
-                            else {
-                                if (directionsX[i] == 0) {
-                                    int value = positionsX[i] / snakeMoveX[i];
-                                    snakes[i][value] = snakeduranceX * snakeMoveX[i];
-                                    if (positionsX[i] >= rows * snakeMoveX[i])
-                                        positionsX[i] = 0;
-                                    else
-                                        positionsX[i] += 1;
+                    clock_t currentTime = clock();
+                    double dt = double(currentTime - previousTime) / CLOCKS_PER_SEC;
+                    if (dt >= frameDelay) {
+                        previousTime = currentTime;
+                        if (invincibilityFrames > 0) // substract invincibility
+                            invincibilityFrames -= 1;
+                        attackFrames -= 1;
+                        // update snake countdowns and summon new parts for X
+                        for (int i = 0; i < charPerRow; i++) {
+                            if (snakeMoveX[i] > 0) {
+                                if (positionsX[i] < 0) {
+                                    positionsX[i] += 1;
                                 }
                                 else {
-                                    int value = positionsX[i] / snakeMoveX[i];
-                                    snakes[i][value] = snakeduranceX * snakeMoveX[i];
-                                    if (positionsX[i] <= 0)
-                                        positionsX[i] = rows * snakeMoveX[i];
-                                    else
-                                        positionsX[i] -= 1;
+                                    if (directionsX[i] == 0) {
+                                        int value = positionsX[i] / snakeMoveX[i];
+                                        sa(i, value, snakeduranceX * snakeMoveX[i]);
+                                        if (positionsX[i] >= rows * snakeMoveX[i])
+                                            positionsX[i] = 0;
+                                        else
+                                            positionsX[i] += 1;
+                                    }
+                                    else {
+                                        int value = positionsX[i] / snakeMoveX[i];
+                                        sa(i, value, snakeduranceX * snakeMoveX[i]);
+                                        if (positionsX[i] <= 0)
+                                            positionsX[i] = rows * snakeMoveX[i];
+                                        else
+                                            positionsX[i] -= 1;
+                                    }
                                 }
                             }
                         }
-                    }
-                    // update snake countdowns and summon new parts for Y
-                    for (int i = 0; i < rows; i++) {
-                            if (positionsY[i] < 0) {
-                                positionsY[i] += 1;
-                            }
-                            else {
-                                if (directionsY[i] == 0) {
-                                    int value = positionsY[i] / snakeMoveY[i];
-                                    snakes[value][i] = snakeduranceY * snakeMoveY[i];
-                                    if (positionsY[i] >= charPerRow * snakeMoveY[i])
-                                        positionsY[i] = 0;
-                                    else
-                                        positionsY[i] += 1;
+                        // update snake countdowns and summon new parts for Y
+                        for (int i = 0; i < rows; i++) {
+                                if (positionsY[i] < 0) {
+                                    positionsY[i] += 1;
                                 }
                                 else {
-                                    int value = positionsY[i] / snakeMoveY[i];
-                                    snakes[value][i] = snakeduranceY * snakeMoveY[i];
-                                    if (positionsY[i] <= 0)
-                                        positionsY[i] = charPerRow * snakeMoveY[i];
-                                    else
-                                        positionsY[i] -= 1;
+                                    if (directionsY[i] == 0) {
+                                        int value = positionsY[i] / snakeMoveY[i];
+                                        sa(value, i, snakeduranceY * snakeMoveY[i]);
+                                        if (positionsY[i] >= charPerRow * snakeMoveY[i])
+                                            positionsY[i] = 0;
+                                        else
+                                            positionsY[i] += 1;
+                                    }
+                                    else {
+                                        int value = positionsY[i] / snakeMoveY[i];
+                                        sa(value, i, snakeduranceY * snakeMoveY[i]);
+                                        if (positionsY[i] <= 0)
+                                            positionsY[i] = charPerRow * snakeMoveY[i];
+                                        else
+                                            positionsY[i] -= 1;
+                                    }
                                 }
-                            }
-                    }
-                    if (snakes[playerX][playerY] > 0 && attackFrames > 0) // hit?
-                        if (invincibilityFrames == 0) { // player must not be invincible
-                            invincibilityFrames = invincibilityFramesMax; // hit
-                            int attackDamage = opponents[opponentnmr].attackdmg;
-                            if (opponents[opponentnmr].dmgrange != 0) { // random damage range?
-                                attackDamage += (randomnum(opponents[opponentnmr].dmgrange + 1)) - opponents[opponentnmr].dmgrange / 2; // pick number between 1 - damage range, subtract by damage range / 2
-                            }
-                            if (cursave.health - attackDamage < 0)
-                                cursave.health = 0;
-                            else
-                                cursave.health -= attackDamage; // substract health
                         }
-                    // screen refresh
-                    for (int i = 0; i < rows; i++) { // for every row
-                        for (int j = 0; j < charPerRow; j++) { // for every char in row
-                            if (i == playerY && j == playerX) {
-                                // invincibility calculation
-                                if (invincibilityFrames % invincibilityFrameChange > 0)
-                                    cout << PIXEL_RED; // player got hurt and is invincible
-                                else
-                                    cout << PIXEL_CYAN;
-                            }
-                            else if (snakes[j][i] > 0) {
-                                cout << PIXEL_WHITE;
-                                snakes[j][i] -= 1;
-                            }
-                            else
-                                cout << PIXEL_GREEN;
-                        }
-                        cout << "\n";
+                        shared();
+                        goBack(rows + 3);
+                    } else {
+                        double timeLeft = frameDelay - dt;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(int(timeLeft * 1000)));
                     }
-                    io.check();
-                    if (io.pressed[K_UP] && playerY != 0 && attackFrames > 0)
-                        playerY -= 1;
-                    if (io.pressed[K_DOWN] && playerY != rows - 1 && attackFrames > 0)
-                        playerY += 1;
-                    if (io.pressed[K_LEFT] && playerX != 0 && attackFrames > 0)
-                        playerX -= 1 * speedmul;
-                    if (io.pressed[K_RIGHT] && playerX != charPerRow - 1 && attackFrames > 0)
-                        playerX += 1 * speedmul;
-                    // render health bar
-                    cout << endl;
-                    for (int i = 0; i < (int)charPerRow / 2 - 3; i++)
-                        cout << " ";
-                    cout << "HEALTH" << endl;
-                    if (cursave.health > 0) {
-                        double healthBar = 100.0 / defHealth * cursave.health / 100.0;
-                        double barWidth = charPerRow;
-                        double pos1 = barWidth * healthBar;
-                        for (int i = 0; i < (int)barWidth; i++) {
-                            if (i <= pos1) cout << PIXEL_RED;
-                            else std::cout << PIXEL_WHITE;
-                        }
-                        cout << " " << cursave.health << " %  " << endl;
-                    }
-                    else {
-                        for (int i = 0; i < 101; i++)
-                            cout << PIXEL_WHITE;
-                        cout << " 0 %    " << endl;
-                    }
-                    goBack(rows + 3);
-                    
-                    MSDelay(dt);
                 }
                 for (int i = 0; i < rows + 3; i++) // for every row + healthbar
                     cout << endl;
