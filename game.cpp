@@ -18,6 +18,7 @@
 #include "inventory.h"
 #include "items.h"
 #include "battle.h"
+#include "shop.h"
 using namespace std;
 
 my_io io;
@@ -142,105 +143,15 @@ map<int,int> needcoins {
             Shop
     ========================= */
 
-vector<vector<int>> shopsellprices = { // for every item put sell price in
-    {0, 0, 0, 0, 0,},
-    {1, 20, 5, 5, 2,},
+map<int,int> shops = {
+    {9, 0},
 };
-
-map<int,int> shops {
-    {9, 1} // on stage 9 shop #1
+map<int,Shop> shopList = {
+    {0, {
+            {{2, 20, 1}, {3, 5, 5}, {4, 5, 2}, {5, 2, 5}},
+            {{1, 1}, {2, 10}, {3, 2}, {4, 2}, {5, 1}}
+        }} // on stage 9 shop #1
 };
-
-vector<vector<int>> shopbuyitems = {
-    {0,0,0,0},
-    {2,3,4,5}
-};
-
-vector<vector<int>> shopbuyprices = {
-    {0,0,0,0,0},
-    {0,20,5,5,2}
-};
-
-vector<vector<int>> shopbuystock = {
-    {0,0,0,0,0},
-    {0,1,5,2,5}
-};
-
-void shop() {
-    bool exit = false;
-    while (!exit) {
-        typeOut(io, "\nCoins: " + colored(to_string(cursave.coins), Color::Yellow));
-        // map<string, string> options;
-        // map<string, string> specialOptions;
-        cout << "\tItem\t\tPrice\tStock\n";
-        std::vector<Option> options;
-        int shop_id = shops[cursave.stage];
-        for (int i = 0; i < shopbuyitems[shop_id].size(); i++){
-            options.push_back(
-                Option(items[shopbuyitems[shop_id][i]].name + "\t" +
-                    to_string(shopbuyprices[shop_id][i]) + "\t" +
-                    to_string(shopbuystock[shops[cursave.stage]][i]),i
-            ));
-        }
-        options.push_back(Option("Sell item(s)", -1, Color::Blue));
-        options.push_back(Option("View inventory", -2, Color::Blue));
-        options.push_back(Option("Exit", -3, Color::Blue));
-        int choice = optionsNav(io, options, "Shop");
-        if (choice == -1){
-            // sell
-            bool exit = false;
-            while (!exit) {
-                std::vector<Option> options2;
-                if (cursave.inventory.size() <= 0)
-                    typeOut(io, "\nYour inventory is empty.");
-                else {
-                    typeOut(io, "\nYour items:");
-                    for (int i = 0; i < (int)cursave.inventory.size(); i++){
-
-                        options2.push_back({to_string(i + 1) + ".\t" + items[cursave.inventory[i]].name, i});
-                    }
-                }
-                options2.push_back({"Exit", -1, Color::Blue});
-                int choice2 = optionsNav(io, options2, "Sell");
-                if (choice2 == -1){
-                    exit = true;
-                }
-                else {
-                    int item_id = cursave.inventory[choice2];
-                    int sell_price = shopsellprices[shop_id][item_id];
-                    cursave.coins += sell_price;
-                    cursave.inventory.remove(item_id);
-                    typeOut(io, "You went ahead and gained " + colored(to_string(sell_price), Color::Yellow) + ((sell_price<=1) ? "coin" : "coin(s)") + "for selling your " + colored(items[item_id].name, Color::Magenta) + ".\n");
-                     
-                }
-            }
-        }
-        else if (choice == -2) {
-            cursave.inventory.interactInventory(cursave, io);
-        }
-        else if (choice == -3) {
-            exit = true;
-        }
-        else { 
-            if (shopbuystock[shop_id][choice] > 0) {
-                if (shopbuyprices[shop_id][choice] <= cursave.coins) {
-                    if (cursave.inventory.addToInventory(shopbuyitems[shop_id][choice]) == true) {
-                        cursave.coins -= shopbuyprices[shop_id][choice];
-                        shopbuystock[shop_id][choice] -= 1;
-                        typeOut(io, "\nYou went ahead and bought a " + colored(items[shopbuyitems[shop_id][choice]].name, Color::Magenta) + ", and paid the shop owner " + colored(to_string(shopbuyprices[shop_id][choice]), Color::Yellow) + " coins.\n");
-                    } else {
-                        typeOut(io, "You wanted to buy a " + colored(items[shopbuyitems[shop_id][choice]].name, Color::Magenta) + ", but your inventory was full!\n");
-                    }
-                } else {
-                    typeOut(io, "You wanted to buy a " + colored(items[shopbuyitems[shop_id][choice]].name, Color::Magenta) + ", but you didn't have enough coins!\n");
-                }
-            } else {
-                typeOut(io, "You wanted to buy a " + colored(items[shopbuyitems[shop_id][choice]].name, Color::Magenta) + ", but it was out of stock!\n");
-            }
-        }
-    }
-    typeOut(io, "You exit the shop menu.\n");
-}
 
 string minigameToString(int minigamenmr) {
     ostringstream os;
@@ -878,7 +789,7 @@ bool processInput(int input) {
         return false;
     }
     else if (input == -1 && shops[cursave.stage] != 0) {
-        shop();
+        shop(io, cursave, shopList[shops[cursave.stage]]);
         return false;
     }
     else if (input == -2 && minigames[cursave.stage] != 0) {
