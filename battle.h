@@ -132,93 +132,37 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, my_io& io, int& 
             }
             giveOptions = true;
         } else if (choice == -2) {
-            bool exit = false;
-            while (!exit) {
-                typeOut(io, "What " + colored("potion", Color::Green) + " do you want to use?");
-                string input2;
-                int iteration = 0;
-                bool rerender = true;
-                map<string, string> specialOptions;
-                specialOptions.insert(pair<string, string>("1", "Health Potion"));
-                specialOptions.insert(pair<string, string>("2", "Damage Potion"));
-                specialOptions.insert(pair<string, string>("3", "Speed Potion"));
-                specialOptions.insert(pair<string, string>("4e", "Exit"));
-                cout << "Use up and down arrow keys to navigate, right arrow key to pick." << endl;
-                set_cursor(false);
-                do {
-                    if (rerender) {
-                        rerender = false;
-                        int i = 0;
-                        for (auto const& p : specialOptions) {
-                            if (iteration == i)
-                                printStyle(colored("Pot >\t" + p.second, Color::Yellow));
-                            else if (i == 0)
-                                printStyle(colored("     \t" + p.second, Color::Magenta));
-                            else if (i == 1)
-                                printStyle(colored("     \t" + p.second, Color::Red));
-                            else if (i == 2)
-                                printStyle(colored("     \t" + p.second, Color::Cyan));
-                            else
-                                printStyle(colored("     \t" + p.second, Color::Blue));
-                            i++;
-                        }
-                        goBack(specialOptions.size());
-                    }
-                    io.check_sync();
-                    if (io.pressed[K_UP])
-                        if (iteration > 0) {
-                            iteration--;
-                            rerender = true;
-                        }
-                    if (io.pressed[K_DOWN])
-                        if (iteration < (int)specialOptions.size() - 1) {
-                            iteration++;
-                            rerender = true;
-                        }
-                } while (!io.pressed[K_RIGHT]);
-                for (int i = 0; i < (int)specialOptions.size(); i++)
-                    cout << endl;
-                set_cursor(true);
-                int i = 0;
-                for (auto const& p : specialOptions) {
-                    if (iteration == i)
-                        input2 = toString(p.first[p.first.length() - 1]);
-                    i++;
-                }
-                if (isdigit(input2[0])) {
-                    int inputint = input2[0] - '0';
-                    if (inputint > 0 && inputint <= 3) {
-                        if (inputint == 1) {
-                            typeOut(io, "You went ahead and took a " + colored("Health Potion", Color::Magenta) + ".");
-                            if (cursave.health + 70 >= 100) {
-                                cursave.health = 100;
-                                typeOut(io, "Your " + colored("Health", Color::Magenta) + " was set to 100.");
-                            }
-                            else {
-                                cursave.health += 70;
-                                typeOut(io, "Your " + colored("Health", Color::Magenta) + " got increased by 70.");
-                            }
-                        }
-                        if (inputint == 2) {
-                            typeOut(io, "You went ahead and took a " + colored("Damage Potion", Color::Red) + ".");
-                            damage += 3;
-                            typeOut(io, "You gained the " + colored("Damage", Color::Red) + " effect for 3 rounds.");
-                        }
-                        if (inputint == 3) {
-                            typeOut(io, "You went ahead and took a " + colored("Speed Potion", Color::Cyan) + ".");
-                            speed += 2;
-                            typeOut(io, "You gained the " + colored("Speed", Color::Cyan) + " effect for 2 rounds.");
-                        }
-                        exit = true;
-                    }
-                    else {
-                        typeOut(io, "The potion number " + to_string(inputint) + " is not available!\n");
-                    }
+            typeOut(io, "What " + colored("potion", Color::Green) + " do you want to use?");
+            string input2;
+            int iteration = 0;
+            bool rerender = true;
+            std::vector<Option> options2;
+            options2.push_back({"Health Potion", 0, Color::Magenta});
+            options2.push_back({"Damage Potion", 1, Color::Red});
+            options2.push_back({"Speed Potion", 2, Color::Cyan});
+            options2.push_back({"Exit", -1, Color::Blue});
+            cout << "Use up and down arrow keys to navigate, right arrow key to pick." << endl;
+            int choice2 = optionsNav(io, options2, "Pot");
+            if (choice2 == 0) {
+                typeOut(io, "You went ahead and took a " + colored("Health Potion", Color::Magenta) + ".");
+                if (cursave.health + 70 >= 100) {
+                    cursave.health = 100;
+                    typeOut(io, "Your " + colored("Health", Color::Magenta) + " was set to 100.");
                 }
                 else {
-                    typeOut(io, "'" + toString(input2[0]) + "' is not a valid option.");
+                    cursave.health += 70;
+                    typeOut(io, "Your " + colored("Health", Color::Magenta) + " got increased by 70.");
                 }
+            } else if (choice2 == 1) {
+                typeOut(io, "You went ahead and took a " + colored("Damage Potion", Color::Red) + ".");
+                damage += 30;
+                typeOut(io, "You gained the " + colored("Damage", Color::Red) + " effect for 3 rounds.");
+            } else if (choice2 == 2) {
+                typeOut(io, "You went ahead and took a " + colored("Speed Potion", Color::Cyan) + ".");
+                speed += 2;
+                typeOut(io, "You gained the " + colored("Speed", Color::Cyan) + " effect for 2 rounds.");
             }
+            // if exit do nothing
         } else {
             retreat = true;
             attack = false;

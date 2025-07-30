@@ -1,0 +1,5 @@
+name: string
+description: string
+isdroppable: 0|1
+isusable: 0|1
+healthrestore: int

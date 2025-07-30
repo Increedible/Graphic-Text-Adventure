@@ -65,6 +65,7 @@ Option::Option(const std::string &text_arg,
     selected_color(selected_color_arg) {}
 
 int optionsNav(my_io &io, const std::vector<Option> &options, std::string hint){
+    while (hint.size()<8)hint.push_back(' ');
     int choice = 0, optionsCnt = options.size();
     bool rerender = true;
     //cout << "Use up and down arrow keys to navigate, right arrow key to pick." << endl;
@@ -75,10 +76,10 @@ int optionsNav(my_io &io, const std::vector<Option> &options, std::string hint){
             rerender = false;
             for (int i=0;i<optionsCnt;i++){
                 if (choice == i){
-                    printStyle(colored(hint + " >\t" + options[i].text, options[i].selected_color));
+                    printStyle(colored(hint + "> " + options[i].text, options[i].selected_color));
                     printf("\n");
                 } else {
-                    printStyle(colored("      \t" + options[i].text, options[i].color));
+                    printStyle(colored("          " + options[i].text, options[i].color));
                     printf("\n");
                 }
             }
