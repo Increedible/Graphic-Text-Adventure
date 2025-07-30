@@ -1,26 +1,23 @@
-#include <iostream>
-#include <random>
-#ifdef __linux__
-    #include <unistd.h>
-#else
-    #include <windows.h>
-#endif
+#pragma once
 
-void MSDelay(int ms) {
-    #ifdef __linux__
-        usleep(ms * 1000);
-    #else
-        Sleep(ms);
-    #endif
-}
+#include <array>
+#include <string>
 
-std::mt19937 rng(time(0));
+enum Direction {
+    north,
+    east,
+    south,
+    west,
+};
+
+void MSDelay(int ms);
 // [l, r)
-int randomnum(int l, int r) {
-    std::uniform_int_distribution gen(l, r-1);
-    return gen(rng);
-}
+int randomnum(int l, int r);
 // [0,r)
-int randomnum(int r) {
-    return randomnum(0, r);
-}
+int randomnum(int r);
+
+// an image of `n` rows of characters
+template<int n>
+using image=std::array<std::string, n>;
+
+std::string toString(char c);

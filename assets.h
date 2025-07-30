@@ -1,13 +1,10 @@
+#pragma once
 #include <iostream>
 #include <vector>
 #include <filesystem>
-#include <array>
+#include "stage.h"
 
 namespace fs = std::filesystem;
-
-// an image of `n` rows of characters
-template<int n>
-using image=std::array<std::string, n>;
 
 /// reads n lines from a `f` and writes them to `out`
 /// @return 0 if succes, otherwise 1
@@ -117,6 +114,113 @@ int loadEnemyAssets()
     }
 
     return 0;
+}
+
+// Helper to write a string with length prefix
+void writeString(FILE* f, const std::string& str) {
+    fprintf(f, "%zu\n", str.size());
+    fwrite(str.data(), 1, str.size(), f);
+};
+
+// Helper to read a string with length prefix
+std::string readStringf(FILE* f) {
+    size_t len;
+    fscanf(f, "%zu\n", &len);
+    std::string str(len, '\0');
+    fread(&str[0], 1, len, f);
+    return str;
+};
+
+void saveStage(FILE* f, Stage s)
+{
+    // id
+    fprintf(f, "%d\n", s.id);
+
+    // name
+    writeString(f, s.name);
+    writeString(f, s.dialogue);
+    writeString(f, s.conclusion);
+
+    // directions
+    for (int i = 0; i < 4; ++i)
+        fprintf(f, "%d%c", s.directions[i], i < 3 ? ' ' : '\n');
+
+    // images
+    saveImage<16>(f, s.vis);
+    saveImage<6>(f, s.legend);
+
+    // needcoins and coinreward
+    fprintf(f, "%d %d\n", s.needcoins, s.coinreward);
+
+    // optional shop and minigame
+    fprintf(f, "%d\n", s.shop.has_value() ? s.shop.value() : -1);
+    fprintf(f, "%d\n", s.minigame.has_value() ? s.minigame.value() : -1);
+
+    // encounter
+    if (s.encounter.has_value()) {
+        fprintf(f, "%d\n", s.encounter->first);
+        writeString(f, s.encounter->second);
+    } else {
+        fprintf(f, "-1\n0\n"); // no encounter, zero-length string
+    }
+
+    // possible encounters
+    fprintf(f, "%zu\n", s.possibleEncounters.size());
+    for (const auto& [opponent, probability] : s.possibleEncounters)
+        fprintf(f, "%d %.6f\n", opponent, probability);
+}
+
+Stage loadStage(FILE* f) {
+    Stage s;
+
+    // id
+    fscanf(f, "%d\n", &s.id);
+
+    // name, dialogue, conclusion
+    s.name = readStringf(f);
+    s.dialogue = readStringf(f);
+    s.conclusion = readStringf(f);
+
+    // directions
+    fscanf(f, "%d %d %d %d\n", &s.directions[0], &s.directions[1], &s.directions[2], &s.directions[3]);
+
+    // images
+    loadImage<16>(f, s.vis);
+    loadImage<6>(f, s.legend);
+
+    // needcoins and coinreward
+    fscanf(f, "%d %d\n", &s.needcoins, &s.coinreward);
+
+    // shop and minigame
+    int temp;
+    fscanf(f, "%d\n", &temp);
+    s.shop = (temp == -1) ? std::nullopt : std::optional<int>(temp);
+    fscanf(f, "%d\n", &temp);
+    s.minigame = (temp == -1) ? std::nullopt : std::optional<int>(temp);
+
+    // encounter
+    fscanf(f, "%d\n", &temp);
+    if (temp == -1) {
+        s.encounter = std::nullopt;
+        fscanf(f, "%d\n", &temp); // skip length zero
+    } else {
+        s.encounter = std::pair<int, std::string>();
+        s.encounter->first = temp;
+        s.encounter->second = readStringf(f);
+    }
+
+    // possible encounters
+    size_t n;
+    fscanf(f, "%zu\n", &n);
+    s.possibleEncounters.resize(n);
+    for (size_t i = 0; i < n; ++i) {
+        int opponent;
+        double prob;
+        fscanf(f, "%d %lf\n", &opponent, &prob);
+        s.possibleEncounters[i] = {opponent, prob};
+    }
+
+    return s;
 }
 
 
