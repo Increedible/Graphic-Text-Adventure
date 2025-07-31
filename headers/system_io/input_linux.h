@@ -1,14 +1,14 @@
 #pragma once
 #include <stdio.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <termios.h>
-#include <cerrno>
 #include <poll.h>
-#include "input_base.h"
 #include <stdlib.h>
+// #include <fcntl.h>
+// #include <cerrno>
+#include "input_base.h"
 
-struct my_io : base_io{
+struct MyIO : base_io{
     termios oldSettings;
 
     void init() {
@@ -16,7 +16,7 @@ struct my_io : base_io{
         termios newSettings;
         tcgetattr(fileno(stdin), &oldSettings);
         newSettings = oldSettings;
-        newSettings.c_lflag &= (~ICANON & ~ECHO);
+        newSettings.c_lflag &= (~ICANON & ~ECHO & ~ISIG);
         tcsetattr(fileno(stdin), TCSANOW, &newSettings);
         // set non-blocking
         // int flags = fcntl(fileno(stdin), F_GETFL, 0);
@@ -62,8 +62,8 @@ struct my_io : base_io{
         }
     }
 
-    void unknown_key(){
-        fprintf(stderr, "unknown key\n");
+    void unknown_key(const char* prev = "", const char key = 0){
+        fprintf(stderr, "unknown key: %s %02x\n", prev, key);
         error_exit();
     }
 
@@ -73,6 +73,12 @@ struct my_io : base_io{
         while (read_inp(c)){
             switch (c)
             {
+            case 0x03:
+                #ifdef THROW_ON_INT
+                    throw Interupt();
+                #endif
+                pressed[K_INT] = 1;
+                break;
             case 0x0a:
                 pressed[K_ENTER] = 1;
                 break;
@@ -97,12 +103,12 @@ struct my_io : base_io{
                         pressed[K_LEFT]=1;
                         break;
                     default:
-                        unknown_key();
+                        unknown_key("1b 5b", c);
                         break;
                     }
                     break;
                 default:
-                    unknown_key();
+                    unknown_key("1b", c);
                     break;
                 }
                 break;
@@ -113,7 +119,7 @@ struct my_io : base_io{
                 pressed[K_a] = 1;
                 break;
             default:
-                unknown_key();
+                unknown_key("", c);
                 break;
             }
         }

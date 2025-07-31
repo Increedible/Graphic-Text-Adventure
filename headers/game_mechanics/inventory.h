@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include "items.h"
-#include "input.h"
+#include "../system_io/input.h"
 
 struct saveState;
 
@@ -10,7 +10,7 @@ struct Inventory {
     int max_elements = 10;
     bool addToInventory(int item);
     bool inventoryHas(int item);
-    void interactInventory(saveState &cursave, my_io &io);
+    void interactInventory(saveState &cursave, MyIO &io);
     void remove(int index);
     size_t size();
     int& operator[](int index);

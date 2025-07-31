@@ -9,18 +9,19 @@
 #include <unistd.h>
 #include <assert.h>
 #include <climits>
-#include "output.h"
-#include "assets.h"
-#include "utilities.h"
-#include "saving.h"
-#include "input.h"
-#include "io_utils.h"
-#include "inventory.h"
-#include "items.h"
-#include "battle.h"
+#include "headers/system_io/input.h"
+#include "headers/system_io/output.h"
+#include "headers/file_system/assets.h"
+#include "headers/file_system/saving.h"
+#include "headers/game_mechanics/inventory.h"
+#include "headers/game_mechanics/items.h"
+#include "headers/game_mechanics/battle.h"
+#include "headers/game_mechanics/shop.h"
+#include "headers/misc/io_utils.h"
+#include "headers/misc/utilities.h"
 using namespace std;
 
-my_io io;
+MyIO io;
 
 bool checkedMap = false;
 int moral = 0;
@@ -142,105 +143,15 @@ map<int,int> needcoins {
             Shop
     ========================= */
 
-vector<vector<int>> shopsellprices = { // for every item put sell price in
-    {0, 0, 0, 0, 0,},
-    {1, 20, 5, 5, 2,},
+map<int,int> shops = {
+    {9, 0},
 };
-
-map<int,int> shops {
-    {9, 1} // on stage 9 shop #1
+map<int,Shop> shopList = {
+    {0, {
+            {{2, 20, 1}, {3, 5, 5}, {4, 5, 2}, {5, 2, 5}},
+            {{1, 1}, {2, 10}, {3, 2}, {4, 2}, {5, 1}}
+        }} // on stage 9 shop #1
 };
-
-vector<vector<int>> shopbuyitems = {
-    {0,0,0,0},
-    {2,3,4,5}
-};
-
-vector<vector<int>> shopbuyprices = {
-    {0,0,0,0,0},
-    {0,20,5,5,2}
-};
-
-vector<vector<int>> shopbuystock = {
-    {0,0,0,0,0},
-    {0,1,5,2,5}
-};
-
-void shop() {
-    bool exit = false;
-    while (!exit) {
-        typeOut(io, "\nCoins: " + colored(to_string(cursave.coins), Color::Yellow));
-        // map<string, string> options;
-        // map<string, string> specialOptions;
-        cout << "\tItem\t\tPrice\tStock\n";
-        std::vector<Option> options;
-        int shop_id = shops[cursave.stage];
-        for (int i = 0; i < shopbuyitems[shop_id].size(); i++){
-            options.push_back(
-                Option(items[shopbuyitems[shop_id][i]].name + "\t" +
-                    to_string(shopbuyprices[shop_id][i]) + "\t" +
-                    to_string(shopbuystock[shops[cursave.stage]][i]),i
-            ));
-        }
-        options.push_back(Option("Sell item(s)", -1, Color::Blue));
-        options.push_back(Option("View inventory", -2, Color::Blue));
-        options.push_back(Option("Exit", -3, Color::Blue));
-        int choice = optionsNav(io, options, "Shop");
-        if (choice == -1){
-            // sell
-            bool exit = false;
-            while (!exit) {
-                std::vector<Option> options2;
-                if (cursave.inventory.size() <= 0)
-                    typeOut(io, "\nYour inventory is empty.");
-                else {
-                    typeOut(io, "\nYour items:");
-                    for (int i = 0; i < (int)cursave.inventory.size(); i++){
-
-                        options2.push_back({to_string(i + 1) + ".\t" + items[cursave.inventory[i]].name, i});
-                    }
-                }
-                options2.push_back({"Exit", -1, Color::Blue});
-                int choice2 = optionsNav(io, options2, "Sell");
-                if (choice2 == -1){
-                    exit = true;
-                }
-                else {
-                    int item_id = cursave.inventory[choice2];
-                    int sell_price = shopsellprices[shop_id][item_id];
-                    cursave.coins += sell_price;
-                    cursave.inventory.remove(item_id);
-                    typeOut(io, "You went ahead and gained " + colored(to_string(sell_price), Color::Yellow) + ((sell_price<=1) ? "coin" : "coin(s)") + "for selling your " + colored(items[item_id].name, Color::Magenta) + ".\n");
-                     
-                }
-            }
-        }
-        else if (choice == -2) {
-            cursave.inventory.interactInventory(cursave, io);
-        }
-        else if (choice == -3) {
-            exit = true;
-        }
-        else { 
-            if (shopbuystock[shop_id][choice] > 0) {
-                if (shopbuyprices[shop_id][choice] <= cursave.coins) {
-                    if (cursave.inventory.addToInventory(shopbuyitems[shop_id][choice]) == true) {
-                        cursave.coins -= shopbuyprices[shop_id][choice];
-                        shopbuystock[shop_id][choice] -= 1;
-                        typeOut(io, "\nYou went ahead and bought a " + colored(items[shopbuyitems[shop_id][choice]].name, Color::Magenta) + ", and paid the shop owner " + colored(to_string(shopbuyprices[shop_id][choice]), Color::Yellow) + " coins.\n");
-                    } else {
-                        typeOut(io, "You wanted to buy a " + colored(items[shopbuyitems[shop_id][choice]].name, Color::Magenta) + ", but your inventory was full!\n");
-                    }
-                } else {
-                    typeOut(io, "You wanted to buy a " + colored(items[shopbuyitems[shop_id][choice]].name, Color::Magenta) + ", but you didn't have enough coins!\n");
-                }
-            } else {
-                typeOut(io, "You wanted to buy a " + colored(items[shopbuyitems[shop_id][choice]].name, Color::Magenta) + ", but it was out of stock!\n");
-            }
-        }
-    }
-    typeOut(io, "You exit the shop menu.\n");
-}
 
 string minigameToString(int minigamenmr) {
     ostringstream os;
@@ -263,7 +174,7 @@ string minigameToString(int minigamenmr) {
             else if (minigameVis[minigamenmr][i][j] == '7')
                 os << PIXEL_CYAN;
         }
-        os << endl;
+        os << PIXEL_RESET << endl;
     }
     return os.str();
 }
@@ -593,21 +504,21 @@ vector<image<16>> mapvis = {
 };
 
 vector<image<6>> maplegend = {
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou",string(PIXEL_BLUE) + "\tWater"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou","T\tTreasure"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou","G\tGuard"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou","S\tShopkeeper"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou","C\tCrowd"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou","P\tPerformer"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou"},
-    {string(PIXEL_GREEN) + "\tGrass",string(PIXEL_WHITE) + "\tRock",string(PIXEL_YELLOW) + "\tPath",string(PIXEL_CYAN) + "\tYou",string(PIXEL_RED)+ "\tMineral Ore","W\tWorkers"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou",string(PIXEL_BLUE) + string(PIXEL_RESET) + "\tWater"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou","T\tTreasure"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou","G\tGuard"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou","S\tShopkeeper"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou","C\tCrowd"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou","P\tPerformer"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou"},
+    {string(PIXEL_GREEN) + string(PIXEL_RESET) + "\tGrass",string(PIXEL_WHITE) + string(PIXEL_RESET) + "\tRock",string(PIXEL_YELLOW) + string(PIXEL_RESET) + "\tPath",string(PIXEL_CYAN) + string(PIXEL_RESET) + "\tYou", string(PIXEL_RED) + string(PIXEL_RESET) + "\tMineral Ore","W\tWorkers"},
 };
 
 vector<StyleString> mapconclusion = {
@@ -650,6 +561,7 @@ string mapToString() {
             else 
                 os << colored(toString(mapvis[cursave.stage][i][j]), Color::Yellow, Color::Yellow).to_string();
         }
+        os << PIXEL_RESET;
         if (compass[i] != "")
             os << compass[i];
         os << "\n";
@@ -663,7 +575,7 @@ string mapToString() {
     ========================= */
 
 void rest() {
-    typeOut(io, "You decided to lie down and look up to the clear sky and rest for a bit.\nYou rest your eyes.\nResting...");
+    typeOut(io, "\nYou decided to lie down and look up to the clear sky and rest for a bit.\nYou rest your eyes.\nResting...");
     set_cursor(false);
     double progress = 0.0;
     while (progress <= 1.0) {
@@ -673,7 +585,7 @@ void rest() {
             if (i <= pos) std::cout << PIXEL_RED;
             else std::cout << PIXEL_WHITE;
         }
-        cout << " " << int(progress * 100.0) << " %\r";
+        cout << PIXEL_RESET << " " << int(progress * 100.0) << " %\r";
         cout.flush();
 
         progress += 0.01;
@@ -682,7 +594,7 @@ void rest() {
     for (int i = 0; i < 70; i++) {
         cout << PIXEL_RED;
     }
-    cout << " 100%\n";
+    cout << PIXEL_RESET << " 100%\n";
     set_cursor(true);
     cursave.stamina = defStamina;
     if (cursave.sanity > 7) {
@@ -800,6 +712,7 @@ int playStage(bool dodialogue = true) {
     if (stageSaves[cursave.stage] != 0){
         options.push_back({"Save game", -3, Color::Blue});
     }
+    cout << "\n";
     return optionsNav(io, options, "");
 }
 
@@ -878,7 +791,7 @@ bool processInput(int input) {
         return false;
     }
     else if (input == -1 && shops[cursave.stage] != 0) {
-        shop();
+        shop(io, cursave, shopList[shops[cursave.stage]]);
         return false;
     }
     else if (input == -2 && minigames[cursave.stage] != 0) {
@@ -951,47 +864,45 @@ Stage makeStage(int i){
 
 int main()
 {
-   // for(int i = 0; i < 17; i++)
-    //{
-        //string path("assets/stages/0.stg");
-        //path += to_string(i) + ".stg";
-        FILE* f = fopen("assets/stages/0.stg", "w");
-        //saveStage(f, makeStage(i));
-        fclose(f);
-
-    loadAssets();
-    io.init();
-    // File saving
-    for (int i = 1; i < 4; i++) {
-        fstream f("saves/savefile" + to_string(i) + ".txt", ios::in);
-        if (!f.is_open()) {
-            saveState s;
-            saveGame(to_string(i), s, cursave.inventory.max_elements); // create default save files in non existant
+    try {
+        loadAssets();
+        io.init();
+        battle(13, cursave, respawn, io, prevstage);
+        // File saving
+        for (int i = 1; i < 4; i++) {
+            fstream f("saves/savefile" + to_string(i) + ".txt", ios::in);
+            if (!f.is_open()) {
+                saveState s;
+                saveGame(to_string(i), s, cursave.inventory.max_elements); // create default save files in non existant
+            }
+            f.close();
         }
-        f.close();
+        typeOut(io, "Please select a save file:");
+        std::vector<std::string> files = {
+            "1",
+            "2",
+            "3"
+        };
+        std::vector<Option> options;
+        for (int i=0;i<files.size();i++){
+            options.push_back({"Save file " + files[i] + " at " + stages[stageOfSave(files[i])], i, Color::Blue});
+        }
+        int choice = optionsNav(io, options, "Save");
+        std::string file = files[choice];
+        typeOut(io, "Loading save file " + file + "...");
+        auto [suc, ret] = loadGame(file);
+        cursave = ret;
+        currentFileIndex = file;
+        MSDelay(1000);
+        bool dodialogue = true;
+        while(true) {
+            if (dodialogue) { possibleEncounter(); }
+            int input = playStage(dodialogue);
+            dodialogue = processInput(input);
+        }
+    } catch(const Interupt &e){
+        printf("\nGame Quit\n");
     }
-    typeOut(io, "Please select a save file:");
-    std::vector<std::string> files = {
-        "1",
-        "2",
-        "3"
-    };
-    std::vector<Option> options;
-    for (int i=0;i<files.size();i++){
-        options.push_back({"Save file " + files[i] + " at " + stages[stageOfSave(files[i])], i, Color::Blue});
-    }
-    int choice = optionsNav(io, options, "Save");
-    std::string file = files[choice];
-    typeOut(io, "Loading save file " + file + "...");
-    auto [suc, ret] = loadGame(file);
-    cursave = ret;
-    currentFileIndex = file;
-    MSDelay(1000);
-    bool dodialogue = true;
-    while(true) {
-        if (dodialogue) { possibleEncounter(); }
-        int input = playStage(dodialogue);
-        dodialogue = processInput(input);
-    }
+    set_cursor(true);
     io.uninit();
 }

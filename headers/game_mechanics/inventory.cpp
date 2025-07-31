@@ -2,8 +2,8 @@
 #include <string>
 #include "inventory.h"
 #include "items.h"
-#include "io_utils.h"
-#include "saving.h"
+#include "../file_system/saving.h"
+#include "../misc/io_utils.h"
 
 bool Inventory::addToInventory(int item) {
     if (inventory.size() >= max_elements)
@@ -19,7 +19,7 @@ bool Inventory::inventoryHas(int item) {
     return false;
 }
 
-void Inventory::interactInventory(saveState &cursave, my_io &io) {
+void Inventory::interactInventory(saveState &cursave, MyIO &io) {
     bool exit = false;
     while (!exit) {
         std::vector<Option> options;
