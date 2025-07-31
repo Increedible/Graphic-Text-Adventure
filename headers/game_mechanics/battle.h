@@ -7,7 +7,8 @@
 #include "../misc/utilities.h"
 using namespace std;
 
-const double FPS = 2.0; // Default: 15.0
+// const double FPS = 2.0; // Default: 15.0
+const double FPS = 20.0; // Default: 15.0
 const int X_SIZE = 101;
 const int Y_SIZE = 11;
 
@@ -228,16 +229,16 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
                         if (i == playerY && j == playerX) {
                             // invincibility calculation
                             if (invincibilityFrames % invincibilityFrameChange > 0)
-                                cout << PIXEL_RED; // player got hurt and is invincible
+                                printf(PIXEL_RED); // player got hurt and is invincible
                             else
-                                cout << PIXEL_CYAN;
+                                printf(PIXEL_CYAN);
                         }
                         else if (attackVis[j][i] > 0)
-                            cout << PIXEL_WHITE;
+                            printf(PIXEL_WHITE);
                         else
-                            cout << PIXEL_GREEN;
+                            printf(PIXEL_GREEN);
                     }
-                    cout << PIXEL_RESET << "\n";
+                    printf("%s\n", PIXEL_RESET);
                 }
             };
 
@@ -282,8 +283,8 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
                 inputCheck();
             };
 
-            const auto& sa = [&](int r, int c, int val=1)  {
-                attackVis[max(min(r, charPerRow), 0)][max(min(c, rows), 0)] = val; 
+            const auto& sa = [&](int c, int r, int val=1)  {
+                attackVis[max(min(c, charPerRow), 0)][max(min(r, rows), 0)] = val; 
             };
 
             if (opponents[opponentnmr].type == 0) { // is attack type spikes?
@@ -435,7 +436,11 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
                     cout << "\n";
             }
             if (opponents[opponentnmr].type == 1) { // is attack type bombs?
-                map<int, int[2]> bombs;
+                // index: column
+                // first: positive: number of frame since creation. Move every bombSpeed frame
+                //        negative: number of frame since explosion. Grow every explodeSpeed frame.
+                // second: row to explode, 0 if no bomb on the column
+                std::vector<std::pair<int,int>> bombs(charPerRow, {0,0});
                 map<int, int> snake;
                 int snakepos = 0;
                 map<int, int> snake2;
@@ -449,21 +454,29 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
                 int snakemove = 2;
                 if (opponents[opponentnmr].difficulty > 2)
                     snakemove = 1; // snake moves faster
-                int chanceofbomb = 2;
+                int chanceofbomb = 30;
                 if (opponents[opponentnmr].difficulty > 2)
-                    chanceofbomb = 5 - opponents[opponentnmr].difficulty;
+                    chanceofbomb = 50 - 10 * opponents[opponentnmr].difficulty;
                 if (opponents[opponentnmr].difficulty > 5)
-                    chanceofbomb = 1;
-                int bombMove = 4;
-                if (opponents[opponentnmr].difficulty > 2) // bombs move faster
-                    bombMove = 3;
-                if (opponents[opponentnmr].difficulty > 4) // bombs move faster
-                    bombMove = 2;
-                int explodeMove = 3;
-                if (opponents[opponentnmr].difficulty > 1) // explode move faster
-                    explodeMove = 2;
-                if (opponents[opponentnmr].difficulty > 4) // explode move faster
-                    explodeMove = 1;
+                    chanceofbomb = 10;
+                // number of attack frame it takes for bomb to move
+                int bombSpeed;
+                if (opponents[opponentnmr].difficulty > 4){
+                    bombSpeed = 3;
+                } else if (opponents[opponentnmr].difficulty > 2){
+                    bombSpeed = 4;
+                } else {
+                    bombSpeed = 6;
+                }
+                // number of attack frame it takes for shockwave to move
+                int explodeSpeed;
+                if (opponents[opponentnmr].difficulty > 4){
+                    explodeSpeed = 3;
+                } else if (opponents[opponentnmr].difficulty > 2) {
+                    explodeSpeed = 4;
+                } else {
+                    explodeSpeed = 6;
+                }
                 int maxBombCooldown = 10 * opponents[opponentnmr].difficulty;
                 if (opponents[opponentnmr].difficulty > 4) // bombs move faster
                     maxBombCooldown = 40;
@@ -473,215 +486,203 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
                 int ammountbombs = 5;
                 if (opponents[opponentnmr].difficulty > 2)
                     ammountbombs = 6;
-                if (opponents[opponentnmr].difficulty > 4)
+                if (opponents[opponentnmr].difficulty > 4){
                     ammountbombs = opponents[opponentnmr].difficulty;
-                
+                }
                 while (attackFrames > 0 && cursave.health > 0) {
                     clock_t currentTime = clock();
                     double dt = double(currentTime - previousTime) / CLOCKS_PER_SEC;
-                    if (dt >= frameDelay) {
-                        previousTime = currentTime;
-                        for (auto&i:attackVis) fill(i.begin(),i.end(),0);
-                        if (invincibilityFrames > 0) // substract invincibility
-                            invincibilityFrames -= 1;
-                        attackFrames -= 1;
-                        // bombs
-                        if (randomnum(chanceofbomb) == 0) { // Is there going to be a bomb summoned?
-                            for (int i = 0; i < ammountbombs; i++) {
-                                int point = randomnum(charPerRow); // Grab random bomb pos
-                                if (bombs[point][0] == 0) { // is this bomb already claimed?
-                                    bombs[point][0] = rows * bombMove + (randomnum(maxBombCooldown)) * bombMove;
-                                    bombs[point][1] = 0 - (rows - 1 - randomnum((int)(rows - rows / 3)));
-                                }
-                            }
-                        }
-                        // upgraded    id   not upgraded
-                        // 000000000        000000000
-                        // 000000000        000000000
-                        // 000010000    0   000010000
-                        // 000000000        000000000
-                        // 000000000        000000000
-                        
-                        // 000000000        000000000
-                        // 000111000        000010000
-                        // 000101000    1   000101000
-                        // 000111000        000010000
-                        // 000000000        000000000
-                        
-                        // 000111000        000000000
-                        // 001101100        000111000
-                        // 011000110    2   001000100
-                        // 001101100        000111000
-                        // 000111000        000000000
-
-                        // 0000000000000        0000000000000
-                        // 0000111110000        0000011100000
-                        // 0001100011000        0000100010000
-                        // 0011000001100    3   0001000001000
-                        // 0001100011000        0000100010000
-                        // 0000111110000        0000011100000
-                        // 0000000000000        0000000000000
-
-                        // bomb update
-                        for (auto const& x : bombs)
-                        {
-                            if (bombs[x.first][0] > 0) {
-                                int value = bombs[x.first][0] / bombMove;
-                                if (bombs[x.first][1] < 0){ 
-                                    if (value == 0 - bombs[x.first][1])
-                                        bombs[x.first][1] = 0;
-                                    else {
-                                        if (value > rows - 1)
-                                            sa(x.first,0);
-                                        else
-                                            sa(x.first,rows - value);
-                                    }
-                                }
-                                else if (bombs[x.first][1] >= 0) {
-                                    if (bombs[x.first][1] - 1 > 0)
-                                        if (bombs[x.first][1] - 1 < 3)
-                                            value += bombs[x.first][1] - 1;
-                                        else
-                                            value += 2;
-                                    int value2 = (int)bombs[x.first][1] / explodeMove;
-                                    if (value2 == 0)
-                                        sa(x.first,value);
-                                    if (value2 == 1) {
-                                        if (upgradedBombs) {
-                                            sa(x.first - 1,value - 1);
-                                            sa(x.first,value - 1);
-                                            sa(x.first + 1,value - 1);
-                                            sa(x.first - 1,value);
-                                            sa(x.first + 1,value);
-                                            sa(x.first - 1,value + 1);
-                                            sa(x.first,value + 1);
-                                            sa(x.first + 1,value + 1);
-                                        }
-                                        else {
-                                            sa(x.first, value - 1);
-                                            sa(x.first - 1, value);
-                                            sa(x.first + 1, value);
-                                            sa(x.first, value + 1);
-                                        }
-                                    }
-                                    if (value2 == 2) {
-                                        if (upgradedBombs) {
-                                            sa(x.first - 1, value - 2);
-                                            sa(x.first, value - 2);
-                                            sa(x.first + 1, value - 2);
-                                            sa(x.first - 2, value - 1);
-                                            sa(x.first - 1, value - 1);
-                                            sa(x.first + 1, value - 1);
-                                            sa(x.first + 2, value - 1);
-                                            sa(x.first + 3, value);
-                                            sa(x.first + 2, value);
-                                            sa(x.first - 2, value);
-                                            sa(x.first - 3, value);
-                                            sa(x.first - 2, value + 1);
-                                            sa(x.first - 1, value + 1);
-                                            sa(x.first + 1, value + 1);
-                                            sa(x.first + 2, value + 1);
-                                            sa(x.first - 1, value + 2);
-                                            sa(x.first, value + 2);
-                                            sa(x.first + 1, value + 2);
-                                        }
-                                        else {
-                                            sa(x.first - 1, value - 1);
-                                            sa(x.first, value - 1);
-                                            sa(x.first + 1, value - 1);
-                                            sa(x.first - 2, value);
-                                            sa(x.first + 2, value);
-                                            sa(x.first - 1, value + 1);
-                                            sa(x.first, value + 1);
-                                            sa(x.first + 1, value + 1);
-                                        }
-                                    }
-                                    if (value2 == 3) {
-                                        if (upgradedBombs) {
-                                            sa(x.first - 2, value - 2);
-                                            sa(x.first - 1, value - 2);
-                                            sa(x.first, value - 2);
-                                            sa(x.first + 1, value - 2);
-                                            sa(x.first + 2, value - 2);
-                                            sa(x.first - 3, value - 1);
-                                            sa(x.first - 2, value - 1);
-                                            sa(x.first + 2, value - 1);
-                                            sa(x.first + 3, value - 1);
-                                            sa(x.first + 4, value);
-                                            sa(x.first + 3, value);
-                                            sa(x.first - 3, value);
-                                            sa(x.first - 4, value);
-                                            sa(x.first - 3, value + 1);
-                                            sa(x.first - 2, value + 1);
-                                            sa(x.first + 2, value + 1);
-                                            sa(x.first + 3, value + 1);
-                                            sa(x.first - 2, value + 2);
-                                            sa(x.first - 1, value + 2);
-                                            sa(x.first, value + 2);
-                                            sa(x.first + 1, value + 2);
-                                            sa(x.first + 2, value + 2);
-                                        }
-                                        else {
-                                            sa(x.first - 1, value - 2);
-                                            sa(x.first, value - 2);
-                                            sa(x.first + 1, value - 2);
-                                            sa(x.first - 2, value - 1);
-                                            sa(x.first + 2, value - 1);
-                                            sa(x.first - 3, value);
-                                            sa(x.first + 3, value);
-                                            sa(x.first - 2, value + 1);
-                                            sa(x.first + 2, value + 1);
-                                            sa(x.first - 1, value + 2);
-                                            sa(x.first, value + 2);
-                                            sa(x.first + 1, value + 2);
-                                        }
-                                    }
-                                    bombs[x.first][1] += 1;
-                                }
-                                bombs[x.first][0] -= 1;
-                            }
-                        }
-                        // for levels above 1, bottom row snake
-                        if (snakemove > 0) {
-                            if (snake2activate > 0)
-                                snake2activate -= 1; // frame countdown for snake 2
-                            // summon new part of body
-                            int value = snakepos / snakemove;
-                            snake[value] = snakedurance;
-                            if (snakepos >= charPerRow * snakemove)
-                                snakepos = 0;
-                            else
-                                snakepos += 1;
-                            if (snake2activate == 0) {
-                                int value2 = snake2pos / snakemove;
-                                snake2[value2] = snakedurance;
-                                if (snake2pos <= 0)
-                                    snake2pos = charPerRow * snakemove;
-                                else
-                                    snake2pos -= 1;
-                            }
-                            // update and render snake body
-                            for (auto const& x : snake) {
-                                if (snake[x.first] > 0) {
-                                    sa(x.first, rows - 1);
-                                    snake[x.first] -= 1;
-                                }
-                            }
-                            if (snake2activate == 0) {
-                                for (auto const& x : snake2) {
-                                    if (snake2[x.first] > 0) {
-                                        sa(x.first, rows - 2);
-                                        snake2[x.first] -= 1;
-                                    }
-                                }
-                            }
-                        }
-                        shared();
-                        goBack(rows + 3);
-                    } else {
+                    if (dt < frameDelay) {
                         double timeLeft = frameDelay - dt;
-                        std::this_thread::sleep_for(std::chrono::milliseconds(int(timeLeft * 1000)));
+                        MSDelay(1000 * timeLeft);
                     }
+                    previousTime = currentTime;
+                    for (auto&i:attackVis) fill(i.begin(),i.end(),0);
+                    if (invincibilityFrames > 0) // substract invincibility
+                        invincibilityFrames -= 1;
+                    // attackFrames -= 1;
+                    // bombs
+                    for (int i = 0; i < ammountbombs; i++) {
+                        if (randomnum(chanceofbomb) == 0) { // Is there going to be a bomb summoned?
+                            int point = randomnum(charPerRow); // Grab random bomb pos
+                            if (bombs[point].second == 0) {
+                                bombs[point] = {
+                                    0,
+                                    randomnum(2, rows)
+                                };
+                            }
+                        }
+                    }
+                    // upgraded    id   not upgraded
+                    // 000000000        000000000
+                    // 000000000        000000000
+                    // 000010000    0   000010000
+                    // 000000000        000000000
+                    // 000000000        000000000
+                    
+                    // 000000000        000000000
+                    // 000111000        000010000
+                    // 000101000    1   000101000
+                    // 000111000        000010000
+                    // 000000000        000000000
+                    
+                    // 000111000        000000000
+                    // 001101100        000111000
+                    // 011000110    2   001000100
+                    // 001101100        000111000
+                    // 000111000        000000000
+
+                    // 0000000000000        0000000000000
+                    // 0000111110000        0000011100000
+                    // 0001100011000        0000100010000
+                    // 0011000001100    3   0001000001000
+                    // 0001100011000        0000100010000
+                    // 0000111110000        0000011100000
+                    // 0000000000000        0000000000000
+
+                    // bomb update
+                    for (int col=0;col<charPerRow;col++){
+                        pair<int, int> &bomb = bombs[col];
+                        if (bomb.second == 0)continue;
+                        if (bomb.first >= 0) {
+                            int row = bomb.first / bombSpeed;
+                            sa(col, row);
+                            bomb.first++;
+                            if (row == bomb.second){
+                                bomb.first = -1;
+                            }
+                        } else {
+                            int row = bomb.second;
+                            int stage = (-bomb.first)/explodeSpeed;
+                            bomb.first--;
+                            if (stage == 0){
+                                sa(col, row);
+                            } else if (stage == 1) {
+                                if (upgradedBombs) {
+                                    sa(col - 1, row - 1);
+                                    sa(col    , row - 1);
+                                    sa(col + 1, row - 1);
+                                    sa(col - 1, row    );
+                                    sa(col + 1, row    );
+                                    sa(col - 1, row + 1);
+                                    sa(col    , row + 1);
+                                    sa(col + 1, row + 1);
+                                } else {
+                                    sa(col    , row - 1);
+                                    sa(col - 1, row    );
+                                    sa(col + 1, row    );
+                                    sa(col    , row + 1);
+                                }
+                            } else if (stage == 2) {
+                                if (upgradedBombs) {
+                                    sa(col - 1, row - 2);
+                                    sa(col    , row - 2);
+                                    sa(col + 1, row - 2);
+                                    sa(col - 2, row - 1);
+                                    sa(col - 1, row - 1);
+                                    sa(col + 1, row - 1);
+                                    sa(col + 2, row - 1);
+                                    sa(col + 3, row    );
+                                    sa(col + 2, row    );
+                                    sa(col - 2, row    );
+                                    sa(col - 3, row    );
+                                    sa(col - 2, row + 1);
+                                    sa(col - 1, row + 1);
+                                    sa(col + 1, row + 1);
+                                    sa(col + 2, row + 1);
+                                    sa(col - 1, row + 2);
+                                    sa(col    , row + 2);
+                                    sa(col + 1, row + 2);
+                                } else {
+                                    sa(col - 1, row - 1);
+                                    sa(col    , row - 1);
+                                    sa(col + 1, row - 1);
+                                    sa(col - 2, row    );
+                                    sa(col + 2, row    );
+                                    sa(col - 1, row + 1);
+                                    sa(col    , row + 1);
+                                    sa(col + 1, row + 1);
+                                }
+                            } else if (stage == 3) {
+                                if (upgradedBombs) {
+                                    sa(col - 2, row - 2);
+                                    sa(col - 1, row - 2);
+                                    sa(col    , row - 2);
+                                    sa(col + 1, row - 2);
+                                    sa(col + 2, row - 2);
+                                    sa(col - 3, row - 1);
+                                    sa(col - 2, row - 1);
+                                    sa(col + 2, row - 1);
+                                    sa(col + 3, row - 1);
+                                    sa(col + 4, row    );
+                                    sa(col + 3, row    );
+                                    sa(col - 3, row    );
+                                    sa(col - 4, row    );
+                                    sa(col - 3, row + 1);
+                                    sa(col - 2, row + 1);
+                                    sa(col + 2, row + 1);
+                                    sa(col + 3, row + 1);
+                                    sa(col - 2, row + 2);
+                                    sa(col - 1, row + 2);
+                                    sa(col    , row + 2);
+                                    sa(col + 1, row + 2);
+                                    sa(col + 2, row + 2);
+                                } else {
+                                    sa(col - 1, row - 2);
+                                    sa(col    , row - 2);
+                                    sa(col + 1, row - 2);
+                                    sa(col - 2, row - 1);
+                                    sa(col + 2, row - 1);
+                                    sa(col - 3, row    );
+                                    sa(col + 3, row    );
+                                    sa(col - 2, row + 1);
+                                    sa(col + 2, row + 1);
+                                    sa(col - 1, row + 2);
+                                    sa(col    , row + 2);
+                                    sa(col + 1, row + 2);
+                                }
+                            } else {
+                                bomb.second = 0;
+                            }
+                        }
+                    }
+                    // for levels above 1, bottom row snake
+                    if (snakemove > 0) {
+                        if (snake2activate > 0)
+                            snake2activate -= 1; // frame countdown for snake 2
+                        // summon new part of body
+                        int value = snakepos / snakemove;
+                        snake[value] = snakedurance;
+                        if (snakepos >= charPerRow * snakemove)
+                            snakepos = 0;
+                        else
+                            snakepos += 1;
+                        if (snake2activate == 0) {
+                            int value2 = snake2pos / snakemove;
+                            snake2[value2] = snakedurance;
+                            if (snake2pos <= 0)
+                                snake2pos = charPerRow * snakemove;
+                            else
+                                snake2pos -= 1;
+                        }
+                        // update and render snake body
+                        for (auto const& x : snake) {
+                            if (snake[x.first] > 0) {
+                                sa(x.first, rows - 1);
+                                snake[x.first] -= 1;
+                            }
+                        }
+                        if (snake2activate == 0) {
+                            for (auto const& x : snake2) {
+                                if (snake2[x.first] > 0) {
+                                    sa(x.first, rows - 2);
+                                    snake2[x.first] -= 1;
+                                }
+                            }
+                        }
+                    }
+                    shared();
+                    goBack(rows + 3);
                 }
                 for (int i = 0; i < rows + 3; i++) // for every row + healthbar
                     cout << "\n";
