@@ -2,18 +2,18 @@
 
 void set_cursor(bool visible) {
     if (visible) {
-        std::printf("\033[?25h");
+        printf("\033[?25h");
     } else {
-        std::printf("\033[?25l");
+        printf("\033[?25l");
     }
 }
 
 void clear() {
-    std::printf("\033[2J\033[H");
+    printf("\033[2J\033[H");
 }
 
 void goBack(int b) {
-    std::printf("\033[%dA", b);
+    printf("\033[%dA", b);
 }
 
 int rgb_to_ansi256(int r, int g, int b) {
