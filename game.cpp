@@ -21,7 +21,7 @@
 #include "headers/misc/utilities.h"
 using namespace std;
 
-my_io io;
+MyIO io;
 
 bool checkedMap = false;
 int moral = 0;
@@ -836,40 +836,45 @@ void music() {
 
 int main()
 {
-    loadAssets();
-    io.init();
-    battle(13, cursave, respawn, io, prevstage);
-    // File saving
-    for (int i = 1; i < 4; i++) {
-        fstream f("saves/savefile" + to_string(i) + ".txt", ios::in);
-        if (!f.is_open()) {
-            saveState s;
-            saveGame(to_string(i), s, cursave.inventory.max_elements); // create default save files in non existant
+    try {
+        loadAssets();
+        io.init();
+        battle(13, cursave, respawn, io, prevstage);
+        // File saving
+        for (int i = 1; i < 4; i++) {
+            fstream f("saves/savefile" + to_string(i) + ".txt", ios::in);
+            if (!f.is_open()) {
+                saveState s;
+                saveGame(to_string(i), s, cursave.inventory.max_elements); // create default save files in non existant
+            }
+            f.close();
         }
-        f.close();
+        typeOut(io, "Please select a save file:");
+        std::vector<std::string> files = {
+            "1",
+            "2",
+            "3"
+        };
+        std::vector<Option> options;
+        for (int i=0;i<files.size();i++){
+            options.push_back({"Save file " + files[i] + " at " + stages[stageOfSave(files[i])], i, Color::Blue});
+        }
+        int choice = optionsNav(io, options, "Save");
+        std::string file = files[choice];
+        typeOut(io, "Loading save file " + file + "...");
+        auto [suc, ret] = loadGame(file);
+        cursave = ret;
+        currentFileIndex = file;
+        MSDelay(1000);
+        bool dodialogue = true;
+        while(true) {
+            if (dodialogue) { possibleEncounter(); }
+            int input = playStage(dodialogue);
+            dodialogue = processInput(input);
+        }
+    } catch(const Interupt &e){
+        printf("\nGame Quit\n");
     }
-    typeOut(io, "Please select a save file:");
-    std::vector<std::string> files = {
-        "1",
-        "2",
-        "3"
-    };
-    std::vector<Option> options;
-    for (int i=0;i<files.size();i++){
-        options.push_back({"Save file " + files[i] + " at " + stages[stageOfSave(files[i])], i, Color::Blue});
-    }
-    int choice = optionsNav(io, options, "Save");
-    std::string file = files[choice];
-    typeOut(io, "Loading save file " + file + "...");
-    auto [suc, ret] = loadGame(file);
-    cursave = ret;
-    currentFileIndex = file;
-    MSDelay(1000);
-    bool dodialogue = true;
-    while(true) {
-        if (dodialogue) { possibleEncounter(); }
-        int input = playStage(dodialogue);
-        dodialogue = processInput(input);
-    }
+    set_cursor(true);
     io.uninit();
 }

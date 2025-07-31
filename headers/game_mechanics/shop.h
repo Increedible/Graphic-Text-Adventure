@@ -29,7 +29,7 @@ struct Shop {
     Shop(){};
 };
 
-void shop(my_io& io, saveState& cursave, Shop& curshop) {
+void shop(MyIO &io, saveState& cursave, Shop& curshop) {
     bool exit = false;
     while (!exit) {
         typeOut(io, "\nCoins: " + colored(std::to_string(cursave.coins), Color::Yellow));

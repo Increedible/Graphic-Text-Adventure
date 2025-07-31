@@ -1,4 +1,9 @@
 #pragma once
+
+// if exception should be throw when ctrl-c is pressed
+#define THROW_ON_INT
+
+#define K_INT 0x03
 #define K_A 0x41
 #define K_a 0x61
 #define K_ENTER 0x80
@@ -11,6 +16,13 @@
 
 #define KCOUNT 256
 
+// exception throw when ctrl-c is pressed
+class Interupt : public std::exception {
+    public:
+    const char* what () {
+        return "Ctrl-c pressed";
+    }
+};
 
 struct base_io {
     // key pressed since last check

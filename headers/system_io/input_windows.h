@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "input_base.h"
 
-struct my_io : base_io{
+struct MyIO : base_io{
     HANDLE hStdin;
     DWORD fdwSaveOldMode;
 
@@ -75,6 +75,9 @@ struct my_io : base_io{
                         // key press
                         bool shift_pressed = keyEvent.dwControlKeyState & SHIFT_PRESSED;
                         bool capslock_on = keyEvent.dwControlKeyState & CAPSLOCK_ON;
+                        bool lctrl_pressed = keyEvent.dwControlKeyState & LEFT_CTRL_PRESSED;
+                        bool rctrl_pressed = keyEvent.dwControlKeyState & RIGHT_CTRL_PRESSED;
+                        bool ctrl_pressed = lctrl_pressed || rctrl_pressed;
                         int pressed_key;
                         switch (keyEvent.wVirtualKeyCode)
                         {
@@ -100,6 +103,15 @@ struct my_io : base_io{
                                 pressed_key = K_a;
                             }
                             break;
+                        case 'C':
+                            if (ctrl_pressed){
+                                #ifdef THROW_ON_INT
+                                    throw Interupt();
+                                #endif
+                                pressed_key = K_INT;
+                                break;
+                            }
+                            // break;
                         default:
                             pressed_key = K_OTHER;
                             break;

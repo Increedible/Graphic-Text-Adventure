@@ -43,7 +43,7 @@ string opponentToString(int opponentnmr) {
     return os.str();
 }
 
-bool battle(int opponentnmr, saveState& cursave, bool& respawn, my_io& io, int& prevstage) {
+bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& prevstage) {
     bool retreat = false;
     bool giveOptions = true;
     int damage = 0;

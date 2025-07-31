@@ -19,7 +19,7 @@ bool Inventory::inventoryHas(int item) {
     return false;
 }
 
-void Inventory::interactInventory(saveState &cursave, my_io &io) {
+void Inventory::interactInventory(saveState &cursave, MyIO &io) {
     bool exit = false;
     while (!exit) {
         std::vector<Option> options;
