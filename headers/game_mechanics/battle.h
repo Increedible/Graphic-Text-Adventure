@@ -12,10 +12,10 @@ const double FPS = 20.0; // Default: 15.0
 const int X_SIZE = 101;
 const int Y_SIZE = 11;
 
-const vector<string> battleVis = {
-    "666666666222222222000000000444444444544444444000000000222222222666666666",
-    "666666666222222222000000000444444444544444444000000000222222222666666666",
-    "666666666222222222000000000444444444544444444000000000222222222666666666"
+const vector<vector<int>> battleVis = {
+    {160,160,160,160,166,166,166,166,166,172,172,172,172,178,178,178,178,184,184,184,184,184,82,46,46,35,31,68,56,21,93,165,201,165,93,21,56,68,31,35,46,46,82,184,184,184,184,184,178,178,178,178,172,172,172,172,166,166,166,166,166,160,160,160,160},
+    {160,160,160,160,166,166,166,166,166,172,172,172,172,178,178,178,178,184,184,184,184,184,82,46,46,35,31,68,56,21,93,165,201,165,93,21,56,68,31,35,46,46,82,184,184,184,184,184,178,178,178,178,172,172,172,172,166,166,166,166,166,160,160,160,160},
+    {160,160,160,160,166,166,166,166,166,172,172,172,172,178,178,178,178,184,184,184,184,184,82,46,46,35,31,68,56,21,93,165,201,165,93,21,56,68,31,35,46,46,82,184,184,184,184,184,178,178,178,178,172,172,172,172,166,166,166,166,166,160,160,160,160},
 };
 
 string opponentToString(int opponentnmr) {
@@ -70,29 +70,14 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
             // attack
             double dmgmul = 1.0;
             if (damage != 0)
-                dmgmul = 1.6;
+                dmgmul = 1.8;
             typeOut(io, "You prepare an attack! Press the up arrow key to strike!");
             set_cursor(false);
             ostringstream os;
             for (int i = 0; i < battleVis.size(); i++) {
-                os << "\n";
-                for (int j = 0; j < (int)battleVis[i].length(); j++) {
-                    if (battleVis[i][j] == '0')
-                        os << PIXEL_GREEN;
-                    else if (battleVis[i][j] == '1')
-                        os << PIXEL_WHITE;
-                    else if (battleVis[i][j] == '2')
-                        os << PIXEL_YELLOW;
-                    else if (battleVis[i][j] == '3')
-                        os << PIXEL_CYAN;
-                    else if (battleVis[i][j] == '4')
-                        os << PIXEL_BLUE;
-                    else if (battleVis[i][j] == '5')
-                        os << PIXEL_MAGENTA;
-                    else if (battleVis[i][j] == '6')
-                        os << PIXEL_RED;
-                    else if (battleVis[i][j] == '7')
-                        os << PIXEL_BLACK;
+                os << "\n ";
+                for (int j = 0; j < (int)battleVis[i].size(); j++) {
+                    os << "\033[48;5;" << to_string(battleVis[i][j]) << "m ";
                 }
                 os << PIXEL_RESET;
             }
@@ -101,10 +86,9 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
             double progress = 0.0;
             do {
                 io.check();
-                double barWidth = 70;
                 std::cout << "[";
-                double pos = barWidth * progress;
-                for (int i = 0; i < (int)barWidth; i++) {
+                double pos = battleVis[0].size() * progress;
+                for (int i = 0; i < (int)battleVis[0].size(); i++) {
                     if (i < pos - 1) std::cout << " ";
                     else if (i > pos) std::cout << " ";
                     else std::cout << "^";
@@ -118,7 +102,7 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
                 else { progress -= 0.01; }
                 MSDelay(10);       
             } while (!io.pressed[K_UP]);
-            int dmg = (int)((cursave.playerDmg - abs(50 - 100 * progress)) * dmgmul + 4);
+            int dmg = (int)(cursave.playerDmg* (1-abs(1-2* progress)) * dmgmul + 4);
             dmg -= (int)(dmg * ((double)opponents[opponentnmr].resistance / 100));
             if (dmg < 0) { dmg = 0; }
             if (opponenthealth - dmg < 0) { opponenthealth = 0; }
@@ -201,7 +185,7 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
             int speedmul = 1;
             if (speed != 0)
                 speedmul = 2;
-            const int invincibilityFramesMax = 30;
+            const int invincibilityFramesMax = 10;
             const int invincibilityFrameChange = 2;
             int invincibilityFrames = 0;
             clock_t previousTime = clock();
@@ -293,7 +277,20 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
                 vector<int> spikesY(rows); 
                 vector<int> spikesY2(rows); 
                 vector<int> spikesY3(rows); 
-                int chanceofspike = 1;
+                int chanceofspike = 5;
+                int counteram = 5;
+                if (opponents[opponentnmr].difficulty > 1) {
+                    chanceofspike = 3;
+                    counteram = 4;
+                }
+                if (opponents[opponentnmr].difficulty > 2) {
+                    chanceofspike = 2;
+                    counteram = 3;
+                }
+                if (opponents[opponentnmr].difficulty > 4) {
+                    chanceofspike = 1;
+                    counteram = 2;
+                }
                 if (opponents[opponentnmr].difficulty > 2) // add 50% chance if difficulty is under or equal to 2
                     int chanceofspikeX = 0;
                 const int spikeMove = 2;
@@ -306,11 +303,18 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
                 int spikes3Countdown = 200;
                 int afkSpikeDelayX = 0;
                 int afkSpikeDelayY = 0;
+                int counter = 0;
                 while (attackFrames != 0 && cursave.health > 0) {
                     clock_t currentTime = clock();
                     double dt = double(currentTime - previousTime) / CLOCKS_PER_SEC;
-                    if (dt >= frameDelay) {
-                        previousTime = currentTime;
+                    if (dt < frameDelay) {
+                        double timeLeft = frameDelay - dt;
+                        MSDelay(timeLeft * 1000);
+                    }
+                    previousTime = currentTime;
+                    counter++;
+                    if (counter == counteram) {
+                        counter = 0;
                         for (auto&i:attackVis) fill(i.begin(),i.end(),0);
                         if (invincibilityFrames > 0) // substract invincibility
                             invincibilityFrames -= 1;
@@ -425,12 +429,9 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
                                 }
                             }
                         }
-                        shared();
-                        goBack(rows + 3);
-                    } else {
-                        double timeLeft = frameDelay - dt;
-                        std::this_thread::sleep_for(std::chrono::milliseconds(int(timeLeft * 1000)));
                     }
+                    shared();
+                    goBack(rows + 3);
                 }
                 for (int i = 0; i < rows + 3; i++) // for every row + healthbar
                     cout << "\n";
@@ -462,11 +463,11 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
                 // number of attack frame it takes for bomb to move
                 int bombSpeed;
                 if (opponents[opponentnmr].difficulty > 4){
-                    bombSpeed = 3;
-                } else if (opponents[opponentnmr].difficulty > 2){
-                    bombSpeed = 4;
-                } else {
                     bombSpeed = 6;
+                } else if (opponents[opponentnmr].difficulty > 2){
+                    bombSpeed = 8;
+                } else {
+                    bombSpeed = 12;
                 }
                 // number of attack frame it takes for shockwave to move
                 int explodeSpeed;
@@ -500,7 +501,7 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
                     for (auto&i:attackVis) fill(i.begin(),i.end(),0);
                     if (invincibilityFrames > 0) // substract invincibility
                         invincibilityFrames -= 1;
-                    // attackFrames -= 1;
+                    attackFrames -= 1;
                     // bombs
                     for (int i = 0; i < ammountbombs; i++) {
                         if (randomnum(chanceofbomb) == 0) { // Is there going to be a bomb summoned?
@@ -714,11 +715,19 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
                 }
                 const int snakeduranceX = 1 * opponents[opponentnmr].difficulty;
                 const int snakeduranceY = 5 * opponents[opponentnmr].difficulty;
+                int counter = 0;
                 while (attackFrames != 0 && cursave.health > 0) {
                     clock_t currentTime = clock();
                     double dt = double(currentTime - previousTime) / CLOCKS_PER_SEC;
-                    if (dt >= frameDelay) {
-                        previousTime = currentTime;
+                    if (dt < frameDelay) {
+                        double timeLeft = frameDelay - dt;
+                        MSDelay(1000*timeLeft);
+                    }
+                    previousTime = currentTime;
+                    counter++;
+                    if (counter == 3) {
+                        counter = 0;
+                        for (auto&i:attackVis) fill(i.begin(),i.end(),0);
                         if (invincibilityFrames > 0) // substract invincibility
                             invincibilityFrames -= 1;
                         attackFrames -= 1;
@@ -750,34 +759,30 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
                         }
                         // update snake countdowns and summon new parts for Y
                         for (int i = 0; i < rows; i++) {
-                                if (positionsY[i] < 0) {
-                                    positionsY[i] += 1;
+                            if (positionsY[i] < 0) {
+                                positionsY[i] += 1;
+                            } else {
+                                if (directionsY[i] == 0) {
+                                    int value = positionsY[i] / snakeMoveY[i];
+                                    sa(value, i, snakeduranceY * snakeMoveY[i]);
+                                    if (positionsY[i] >= charPerRow * snakeMoveY[i])
+                                        positionsY[i] = 0;
+                                    else
+                                        positionsY[i] += 1;
                                 }
                                 else {
-                                    if (directionsY[i] == 0) {
-                                        int value = positionsY[i] / snakeMoveY[i];
-                                        sa(value, i, snakeduranceY * snakeMoveY[i]);
-                                        if (positionsY[i] >= charPerRow * snakeMoveY[i])
-                                            positionsY[i] = 0;
-                                        else
-                                            positionsY[i] += 1;
-                                    }
-                                    else {
-                                        int value = positionsY[i] / snakeMoveY[i];
-                                        sa(value, i, snakeduranceY * snakeMoveY[i]);
-                                        if (positionsY[i] <= 0)
-                                            positionsY[i] = charPerRow * snakeMoveY[i];
-                                        else
-                                            positionsY[i] -= 1;
-                                    }
+                                    int value = positionsY[i] / snakeMoveY[i];
+                                    sa(value, i, snakeduranceY * snakeMoveY[i]);
+                                    if (positionsY[i] <= 0)
+                                        positionsY[i] = charPerRow * snakeMoveY[i];
+                                    else
+                                        positionsY[i] -= 1;
                                 }
+                            }
                         }
-                        shared();
-                        goBack(rows + 3);
-                    } else {
-                        double timeLeft = frameDelay - dt;
-                        std::this_thread::sleep_for(std::chrono::milliseconds(int(timeLeft * 1000)));
                     }
+                    shared();
+                    goBack(rows + 3);
                 }
                 for (int i = 0; i < rows + 3; i++) // for every row + healthbar
                     cout << endl;

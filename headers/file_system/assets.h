@@ -94,7 +94,7 @@ Enemy loadEnemy(FILE* f)
 
 void saveEnemy(FILE* f, Enemy out)
 {
-    fprintf(f, "%d %d %d %d %d %d %d %d %d\n", out.hp, out.attackdmg, out.attackdurance, out.type,
+    fprintf(f, "%d %d %d %d %d %d %d %d %d\n", out.hp, out.attackdurance, out.attackdmg, out.type,
         out.difficulty, out.dmgrange, out.resistance, out.coinrewardmin, out.coinrewardmax);
     saveImage<23>(f, out.vis);
 }
