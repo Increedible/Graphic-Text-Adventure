@@ -6,59 +6,128 @@
 #include "utilities.h"
 #include "io_utils.h"
 
+BetterColor::BetterColor(int num) {
+    value = num;
+}
+BetterColor::BetterColor(Color num) {
+    if (num==Color::None) value=-1;
+    else value = (int)num+8; // the +8 here is for high intensity
+    // can also switch on color:
+    // constexpr const char *const FG_COLOR[] = {
+    //     "\033[30m",
+    //     "\033[38;5;196m",
+    //     "\033[38;5;148m",
+    //     "\033[38;5;220m",
+    //     "\033[38;5;21m",
+    //     "\033[38;5;134m",
+    //     "\033[36m",
+    //     "\033[37m",
+    //     "\033[39m"
+    // };
+}
+
+std::string BetterColor::toString() const{
+    return "\033[38;5;" + std::to_string(value) + "m";
+}
+
 // string where every non-control character is seprated by \0
 
 StyleString::StyleString(){}
 
 // create StyleString with normal (no control character) string
 StyleString::StyleString(const std::string &s){
-    for (const char&c:s){
-        push_back(c);
-    }
+    str = s;
+}
+
+StyleString::StyleString(const StyleString &ss){
+    str = ss.str;
+}
+
+const char* StyleString::c_str() const{
+    return str.c_str();
+}
+
+const char* StyleString::begin() const{
+    return str.c_str();
+}
+
+const char* StyleString::end() const{
+    return str.c_str() + str.size();
+}
+
+void StyleString::operator+=(const std::string &s){
+    str += s;
+}
+
+void StyleString::operator+=(const StyleString &ss){
+    str += ss.str;
 }
 
 void StyleString::push_back(const char&c) {
     str.push_back(c);
-    str.push_back('\0');
 }
 
-StyleString StyleString::operator+(const StyleString& b) {
-    StyleString ret;
-    ret.str = str+b.str;
-    return ret;
-}
-
-std::string StyleString::to_string(){
+std::string StyleString::to_string() const{
     std::string s;
-    for(auto c: s)
-        if (c != '\0')
-            s += c;      
+    for(auto c: s){
+        if (c != '\0'){
+            s.pop_back();
+        }
+    }
     return s;
 }
 
-StyleString operator+(const std::string &s, const StyleString &ss) {
-    StyleString ret(s);
-    ret.str += ss.str;
+std::string StyleString::to_raw_string() const{
+    std::string s;
+    for (const char *i=begin();i<end();i++){
+        if (*i){
+            s.push_back(*i);
+        } else {
+            for (i++;*i;i++);
+        }
+    }
+    return s;
+}
+
+StyleString operator+(const StyleString &a, const StyleString &b) {
+    StyleString ret;
+    ret.str = a.str+b.str;
     return ret;
 }
 
-StyleString operator+(StyleString ss, const char* s) {
-    return ss+std::string(s);
+StyleString operator+(const char* s, const StyleString &ss) {
+    return StyleString(s + ss.str);
+}
+
+StyleString operator+(const StyleString &ss, const char* s) {
+    return StyleString(ss.str + s);
+}
+
+StyleString operator+(const std::string &s, const StyleString &ss) {
+    return StyleString(s + ss.str);
+}
+
+StyleString operator+(const StyleString &ss, const std::string &s) {
+    return StyleString(ss.str + s);
 }
 
 // return string with color code
-StyleString colored(std::string text, BetterColor fg, BetterColor bg) {
-    StyleString ret(text);
-    std::string ctrl;
-    if (fg.value != -1) ctrl += "\033[38;5;" + std::to_string(fg.value) + "m";
-    if (bg.value != -1) ctrl += "\033[48;5;" + std::to_string(bg.value) + "m";
-    ret.str = ctrl + ret.str + PIXEL_RESET;
-    ret.str.push_back('\0');
+StyleString colored(const std::string &text, BetterColor fg, BetterColor bg) {
+    StyleString ret;
+    ret.push_back('\0');
+    if (fg.value != -1) ret += fg.toString();
+    if (bg.value != -1) ret += bg.toString();
+    ret.push_back('\0');
+    ret += text;
+    ret.push_back('\0');
+    ret += PIXEL_RESET;
+    ret.push_back('\0');
     return ret;
 }
 
-void printStyle(StyleString str){
-    for (const char *i = str.str.c_str();*i;i++) {
+void printStyle(const StyleString &str){
+    auto i=str.begin();
+    for (const char *i = str.begin();i<str.end();i++) {
         i += printf("%s",i);
     }
 }
@@ -72,14 +141,19 @@ void wait_enter(MyIO &io) {
 
 void typeOut(MyIO &io, const StyleString &text, int sleepms, int aftersleep) {
     bool skip = 0;
-    for (const char *i = text.str.c_str();*i;i++) {
-        i += printf("%s",i);
-        fflush(stdout);
-        io.check();
-        if (io.pressed[K_LEFT])skip = 1;
-        if (*i == '\n')skip = 0;
-        if (!skip) {
-            MSDelay(sleepms);
+    for (const char *i = text.begin();i<text.end();i++) {
+        if (*i){
+            printf("%c", *i);
+            fflush(stdout);
+            io.check();
+            if (io.pressed[K_LEFT])skip = 1;
+            if (*i == '\n')skip = 0;
+            if (!skip) {
+                MSDelay(sleepms);
+            }
+        } else {
+            i++;
+            i += printf("%s", i);
         }
     }
     printf("\n");
@@ -93,14 +167,20 @@ void typeOut(MyIO &io, const char* text, int sleepms, int aftersleep) {
 
 void typeOutLine(MyIO &io, const StyleString &text, int sleepms, int aftersleep) {
     bool skip = 0;
-    for (const char*i=text.str.c_str();*i;i++) {
-        i += printf("%s",i);
-        if (*i!='\n')continue;
-        fflush(stdout);
-        io.check();
-        if (io.pressed[K_LEFT])skip = 1;
-        if (!skip) {
-            MSDelay(sleepms);
+    for (const char*i=text.begin();i<text.end();i++) {
+        if (*i){
+            printf("%c", *i);
+            if (*i != '\n')continue;
+            fflush(stdout);
+            io.check();
+            if (io.pressed[K_LEFT])skip = 1;
+            if (*i == '\n')skip = 0;
+            if (!skip) {
+                MSDelay(sleepms);
+            }
+        } else {
+            i++;
+            i += printf("%s", i);
         }
     }
     printf("\n");

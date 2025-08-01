@@ -1,1 +1,1 @@
-g++ game.cpp headers/game_mechanics/inventory.cpp headers/system_io/output.cpp headers/misc/utilities.cpp headers/game_mechanics/items.cpp headers/misc/io_utils.cpp headers/file_system/saving.cpp -o game
+g++ game.cpp headers/game_mechanics/inventory.cpp headers/system_io/output.cpp headers/misc/utilities.cpp headers/game_mechanics/items.cpp headers/misc/io_utils.cpp headers/file_system/saving.cpp -o game -Wall -Wextra -Wshadow

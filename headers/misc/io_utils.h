@@ -30,25 +30,9 @@ enum class Color {
 
 struct BetterColor {
     int value=-1;
-    BetterColor(int num) {
-        value = num;
-    }
-    BetterColor(Color num) {
-        if (num==Color::None) value=-1;
-        else value = (int)num+8; // the +8 here is for high intensity
-        // can also switch on color:
-        // constexpr const char *const FG_COLOR[] = {
-        //     "\033[30m",
-        //     "\033[38;5;196m",
-        //     "\033[38;5;148m",
-        //     "\033[38;5;220m",
-        //     "\033[38;5;21m",
-        //     "\033[38;5;134m",
-        //     "\033[36m",
-        //     "\033[37m",
-        //     "\033[39m"
-        // };
-    }
+    BetterColor(int num);
+    BetterColor(Color num);
+    std::string toString() const;
 };
 
 // string where every non-control character is seprated by \0
@@ -56,15 +40,24 @@ struct StyleString{
     std::string str;
     StyleString();
     StyleString(const std::string &s);
+    StyleString(const StyleString &s);
+    const char* c_str() const;
+    const char* begin() const;
+    const char* end() const;
+    void operator+=(const std::string &s);
+    void operator+=(const StyleString &ss);
     void push_back(const char&c);
-    StyleString operator+(const StyleString& b);
-    std::string to_string();
+    std::string to_string() const;
+    std::string to_raw_string() const;
 };
 
+StyleString operator+(const StyleString &a, const StyleString &b);
 StyleString operator+(const std::string &s, const StyleString &ss);
-StyleString operator+(StyleString ss, const char* s);
-StyleString colored(std::string text, BetterColor fg = Color::None, BetterColor bg = Color::None);
-void printStyle(StyleString str);
+StyleString operator+(const StyleString &ss, const std::string &s);
+StyleString operator+(const char* s, const StyleString &ss); 
+StyleString operator+(const StyleString &ss, const char* s);
+StyleString colored(const std::string &text, BetterColor fg = Color::None, BetterColor bg = Color::None);
+void printStyle(const StyleString &str);
 
 // wait for enter key to be pressed
 void wait_enter(MyIO &io);
