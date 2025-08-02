@@ -867,7 +867,6 @@ int main()
     try {
         loadAssets();
         io.init();
-        battle(13, cursave, respawn, io, prevstage);
         // File saving
         for (int i = 1; i < 4; i++) {
             fstream f("saves/savefile" + to_string(i) + ".txt", ios::in);
@@ -884,7 +883,7 @@ int main()
             "3"
         };
         std::vector<Option> options;
-        for (int i=0;i<files.size();i++){
+        for (int i=0;i<(int)files.size();i++){
             options.push_back({"Save file " + files[i] + " at " + stages[stageOfSave(files[i])], i, Color::Blue});
         }
         int choice = optionsNav(io, options, "Save");
@@ -901,7 +900,7 @@ int main()
             dodialogue = processInput(input);
         }
     } catch(const Interupt &e){
-        printf("\nGame Quit\n");
+        printStyle(colored("\nGame Quit\n", Color::Red));
     }
     set_cursor(true);
     io.uninit();

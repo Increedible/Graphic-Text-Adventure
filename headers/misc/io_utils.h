@@ -46,6 +46,8 @@ struct StyleString{
     const char* end() const;
     void operator+=(const std::string &s);
     void operator+=(const StyleString &ss);
+    void operator=(const StyleString& s);
+    void operator=(const std::string& s);
     void push_back(const char&c);
     std::string to_string() const;
     std::string to_raw_string() const;

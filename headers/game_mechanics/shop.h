@@ -35,7 +35,7 @@ void shop(MyIO &io, saveState& cursave, Shop& curshop) {
         typeOut(io, "\nCoins: " + colored(std::to_string(cursave.coins), Color::Yellow));
         std::cout << "\tItem\t\tPrice\tStock\n";
         std::vector<Option> options;
-        for (int i = 0; i < curshop.availableitems.size(); i++){
+        for (size_t i = 0; i < curshop.availableitems.size(); i++){
             options.push_back(
                 Option(items[curshop.availableitems[i]].name + "\t" +
                     std::to_string(curshop.itembuyprices[i]) + "\t" +
@@ -48,8 +48,8 @@ void shop(MyIO &io, saveState& cursave, Shop& curshop) {
         int choice = optionsNav(io, options, "Shop");
         if (choice == -1){
             // sell
-            bool exit = false;
-            while (!exit) {
+            bool exit2 = false;
+            while (!exit2) {
                 std::vector<Option> options2;
                 if (cursave.inventory.inventory.size() <= 0)
                     typeOut(io, "\nYour inventory is empty.");
@@ -63,7 +63,7 @@ void shop(MyIO &io, saveState& cursave, Shop& curshop) {
                 options2.push_back({"Exit", -1, Color::Blue});
                 int choice2 = optionsNav(io, options2, "Sell");
                 if (choice2 == -1){
-                    exit = true;
+                    exit2 = true;
                 }
                 else {
                     int item_id = cursave.inventory[choice2];

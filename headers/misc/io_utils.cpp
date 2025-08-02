@@ -95,6 +95,15 @@ StyleString operator+(const StyleString &a, const StyleString &b) {
     return ret;
 }
 
+void StyleString::operator=(const StyleString& s) {
+    str = s.str;
+}
+
+void StyleString::operator=(const std::string& s) {
+    StyleString ret(s);
+    str = ret.str;
+}
+
 StyleString operator+(const char* s, const StyleString &ss) {
     return StyleString(s + ss.str);
 }
@@ -126,7 +135,6 @@ StyleString colored(const std::string &text, BetterColor fg, BetterColor bg) {
 }
 
 void printStyle(const StyleString &str){
-    auto i=str.begin();
     for (const char *i = str.begin();i<str.end();i++) {
         i += printf("%s",i);
     }

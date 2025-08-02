@@ -15,7 +15,7 @@ const int Y_SIZE = 11;
 const vector<vector<int>> battleVis = {
     {160,160,160,160,166,166,166,166,166,172,172,172,172,178,178,178,178,184,184,184,184,184,82,46,46,35,31,68,56,21,93,165,201,165,93,21,56,68,31,35,46,46,82,184,184,184,184,184,178,178,178,178,172,172,172,172,166,166,166,166,166,160,160,160,160},
     {160,160,160,160,166,166,166,166,166,172,172,172,172,178,178,178,178,184,184,184,184,184,82,46,46,35,31,68,56,21,93,165,201,165,93,21,56,68,31,35,46,46,82,184,184,184,184,184,178,178,178,178,172,172,172,172,166,166,166,166,166,160,160,160,160},
-    {160,160,160,160,166,166,166,166,166,172,172,172,172,178,178,178,178,184,184,184,184,184,82,46,46,35,31,68,56,21,93,165,201,165,93,21,56,68,31,35,46,46,82,184,184,184,184,184,178,178,178,178,172,172,172,172,166,166,166,166,166,160,160,160,160},
+    {160,160,160,160,166,166,166,166,166,172,172,172,172,178,178,178,178,184,184,184,184,184,82,46, 46,35,31,68,56,21,93,165,201,165,93,21,56,68,31,35,46,46,82,184,184,184,184,184,178,178,178,178,172,172,172,172,166,166,166,166,166,160,160,160,160},
 };
 
 string opponentToString(int opponentnmr) {
@@ -74,7 +74,7 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
             typeOut(io, "You prepare an attack! Press the up arrow key to strike!");
             set_cursor(false);
             ostringstream os;
-            for (int i = 0; i < battleVis.size(); i++) {
+            for (size_t i = 0; i < battleVis.size(); i++) {
                 os << "\n ";
                 for (int j = 0; j < (int)battleVis[i].size(); j++) {
                     os << "\033[48;5;" << to_string(battleVis[i][j]) << "m ";
@@ -120,8 +120,6 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
         } else if (choice == -2) {
             typeOut(io, "What " + colored("potion", Color::Green) + " do you want to use?");
             string input2;
-            int iteration = 0;
-            bool rerender = true;
             std::vector<Option> options2;
             options2.push_back({"Health Potion", 0, Color::Magenta});
             options2.push_back({"Damage Potion", 1, Color::Red});
@@ -177,7 +175,7 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
             cout << "\r" << flush;
             set_cursor(false); // hide cursor
             int attackFrames = opponents[opponentnmr].attackdurance;
-            bool exitAttack = false;
+            // bool exitAttack = false;
             const int rows = Y_SIZE;
             const int charPerRow = X_SIZE;
             int playerX = 50;
@@ -291,8 +289,8 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
                     chanceofspike = 1;
                     counteram = 2;
                 }
-                if (opponents[opponentnmr].difficulty > 2) // add 50% chance if difficulty is under or equal to 2
-                    int chanceofspikeX = 0;
+                // if (opponents[opponentnmr].difficulty > 2) // add 50% chance if difficulty is under or equal to 2
+                //     int chanceofspikeX = 0;
                 const int spikeMove = 2;
                 const int maxSpikeCooldown = 10 * opponents[opponentnmr].difficulty;
                 const int ammountSpikesX = 4 * opponents[opponentnmr].difficulty;
@@ -478,9 +476,9 @@ bool battle(int opponentnmr, saveState& cursave, bool& respawn, MyIO &io, int& p
                 } else {
                     explodeSpeed = 6;
                 }
-                int maxBombCooldown = 10 * opponents[opponentnmr].difficulty;
-                if (opponents[opponentnmr].difficulty > 4) // bombs move faster
-                    maxBombCooldown = 40;
+                // int maxBombCooldown = 10 * opponents[opponentnmr].difficulty;
+                // if (opponents[opponentnmr].difficulty > 4) // bombs move faster
+                //     maxBombCooldown = 40;
                 bool upgradedBombs = false;
                 if (opponents[opponentnmr].difficulty > 2)
                     upgradedBombs = true;

@@ -6,7 +6,7 @@
 #include "../misc/io_utils.h"
 
 bool Inventory::addToInventory(int item) {
-    if (inventory.size() >= max_elements)
+    if ((int)inventory.size() >= max_elements)
         return false;
     inventory.push_back(item);
     return true;
@@ -35,7 +35,7 @@ void Inventory::interactInventory(saveState &cursave, MyIO &io) {
         if (choice == -1)
             exit = true;
         else {
-            int size = inventory.size();
+            //int size = inventory.size();
             item &it = items[inventory[choice]];
             typeOut(io, "\n" + colored(it.name, Color::Magenta));
             std::vector<Option> options2;

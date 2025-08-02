@@ -123,14 +123,14 @@ int loadEnemyAssets()
 // Helper to write a string with length prefix
 void writeString(FILE* f, const std::string& str) {
     size_t len = str.size();
-    fprintf(f, "%d\n", len);              // write length first
+    fprintf(f, "%zu\n", len);              // write length first
     fwrite(str.data(), 1, len, f);                // write raw bytes
 }
 
 // Helper to read a string with length prefix
 std::string readStringf(FILE* f) {
     size_t len;
-    fscanf(f, "%d\n", &len);               // read length
+    fscanf(f, "%zu\n", &len);               // read length
     std::string str(len, '\0');
     fread(&str[0], 1, len, f);                    // read raw bytes
     return str;
